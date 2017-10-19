@@ -12,5 +12,5 @@ intrinsic class skse.plugins.AHZmoreHUDPlugin
 	static function GetIsValidTarget():Boolean;
 	static function GetArmorWeightClassString():String;
 	static function GetBookSkillString():String;
-	static function GetValueToWeightString():String;
+	static function GetValueToWeightString(data:String):String;
 }

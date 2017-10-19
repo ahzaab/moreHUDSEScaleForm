@@ -101,7 +101,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ToggleState = 0;
 		savedRolloverInfoText = "";
 		showTargetWeight = false;
-		showValueToWeight = false;
+		showValueToWeight = true;
 		
 		//Weapons_mc.LeftItem.EquipIcon.gotoAndStop("LeftEquip");
 		//Weapons_mc.RightItem.EquipIcon.gotoAndStop("RightEquip");
@@ -238,7 +238,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Show weight class if its armor
 			if (_root.HUDMovieBaseInstance.RolloverInfoText._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoText.htmlText != "")
 			{
-				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString();
+				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText);
 				if (valueToWeight != "")
 				{
 					// Insert the weight class into the rolloverinfo textfield
