@@ -482,6 +482,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	}
 
 	// @Papyrus
+	public function setBottomWidgetScale(percent:Number):Void
+	{
+		AHZBottomBar_mc._yscale  = (percent / 1.0);
+		AHZBottomBar_mc._xscale  = (percent / 1.0);
+	}
+
+	// @Papyrus
 	public function setInventoryWidgetPosition(xPercent:Number,yPercent:Number):Void
 	{
 		var tempVar:Number;
@@ -498,6 +505,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	}
 	
 	// @Papyrus
+	public function setInventoryWidgetScale(percent:Number):Void
+	{
+		Inventory_mc._yscale  = (percent / 1.0);
+		Inventory_mc._xscale  = (percent / 1.0);
+	}	
+	
+	// @Papyrus
 	public function setSideWidgetPosition(xPercent:Number,yPercent:Number):Void
 	{
 		var tempVar:Number;
@@ -512,6 +526,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		tempVar = (Stage.visibleRect.height/inverse)-(content.SizeHolder_mc._height/inverse);
 		content._y = tempVar;
 	}
+
+	// @Papyrus
+	public function setSideWidgetScale(percent:Number):Void
+	{
+		content._yscale  = (percent / 1.0);
+		content._xscale  = (percent / 1.0);
+	}	
 
 	// @Papyrus
 	public function updateSettings(sideView:Number, 
@@ -783,7 +804,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				}				
 				// Remove the right margin if it already exists
 				var formatText:String=_root.HUDMovieBaseInstance.RolloverInfoText.htmlText;
-				var tempArray:Array=formatText.split("RIGHTMARGIN=\"60\"");
+				var tempArray:Array=formatText.split("RIGHTMARGIN=\"40\"");
 				formatText=tempArray.join("RIGHTMARGIN=\"0\"");
 				_root.HUDMovieBaseInstance.RolloverInfoText.htmlText=formatText;
 
@@ -794,7 +815,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				_root.HUDMovieBaseInstance.RolloverInfoText.getLineMetrics(0).x +
 				_root.HUDMovieBaseInstance.RolloverInfoText.getLineMetrics(0).width;
 				var theY:Number = _root.HUDMovieBaseInstance._y + _root.HUDMovieBaseInstance.RolloverInfoText._y;
-				theY = theY + 7.0;
+				theY = theY + 10.0;
 				
 
 				// Convert to this coordinates
@@ -807,7 +828,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				// Add a right margin to the rollover textfield to give room for the read image
 				var formatText:String=_root.HUDMovieBaseInstance.RolloverInfoText.htmlText;
 				var tempArray:Array=formatText.split("RIGHTMARGIN=\"0\"");
-				formatText=tempArray.join("RIGHTMARGIN=\"60\"");
+				formatText=tempArray.join("RIGHTMARGIN=\"40\"");
 				_root.HUDMovieBaseInstance.RolloverInfoText.htmlText=formatText;
 			}
 			else
