@@ -171,8 +171,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
 			var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);	
 			ProcessPlayerWidget(validTarget && hudIsVisible);
-			ProcessTargetWidget(validTarget && hudIsVisible);
-			ProcessInventoryCountWidget(validTarget && hudIsVisible);
+			ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 		}
 	}
 
@@ -182,16 +181,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
 		var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);
 		ProcessPlayerWidget(validTarget && hudIsVisible);
-		ProcessTargetWidget(validTarget && hudIsVisible);
-		ProcessInventoryCountWidget(validTarget && hudIsVisible);
+		ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 	}
 
 	function TurnOffWidgets():Void
 	{
 		ToggleState = 0;
 		ProcessPlayerWidget(false);
-		ProcessTargetWidget(false);
-		ProcessInventoryCountWidget(false);
+		ProcessTargetAndInventoryWidget(false);
 		hideBottomWidget();
 	}
 
@@ -221,8 +218,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 		// Process the bottom player widget
 		ProcessPlayerWidget(validTarget && activateWidgets);
-		ProcessTargetWidget(validTarget && activateWidgets);
-		ProcessInventoryCountWidget(validTarget && activateWidgets);
+		ProcessTargetAndInventoryWidget(validTarget && activateWidgets);
 		
 		// Always show regardless of activation mode
 		ProcessValueToWeight(validTarget);
@@ -313,69 +309,61 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 	}
 
-	function ProcessTargetWidget(isValidTarget:Boolean):Void
+	function ProcessTargetAndInventoryWidget(isValidTarget:Boolean):Void
 	{
 		var sideWidgetDataExists:Boolean = false;
 
 		if (isValidTarget)
 		{
+			var targetData:Object = {effectsObj:Object, ingredientObj:Object, inventoryObj:Object};
+			
+			if (viewEffectsInfo || viewSideInfo || viewInventoryCount)
+			{
+				// Get the target effects
+				_global.skse.plugins.AHZmoreHUDPlugin.GetTargetEffects(targetData, viewInventoryCount);	
+			}
+						
 			if (viewEffectsInfo)
 			{
-				var effectData:Object = {effectsObj:Object};
-				// Get the target effects
-				_global.skse.plugins.AHZmoreHUDPlugin.GetTargetEffects(effectData);
-
 				// If effects exist
-				if (effectData.effectsObj != undefined && effectData.effectsObj != null)
+				if (targetData.effectsObj != undefined && targetData.effectsObj != null)
 				{
 					sideWidgetDataExists = true;
-					showSideWidget(effectData.effectsObj);
+					showSideWidget(targetData.effectsObj);
 				}
 			}
 			
 			if (viewSideInfo && !sideWidgetDataExists)
 			{
-				var ingredientData:Object = {ingredientObj:Object};
-				_global.skse.plugins.AHZmoreHUDPlugin.GetIngredientData(ingredientData);
-
 				// If the target is an ingredient
-				if (ingredientData.ingredientObj != undefined && ingredientData.ingredientObj != null)
+				if (targetData.ingredientObj != undefined && targetData.ingredientObj != null)
 				{
 					sideWidgetDataExists = true;
-					showSideWidget(ingredientData.ingredientObj);
+					showSideWidget(targetData.ingredientObj);
 				}
 			}
+			
+			if (viewInventoryCount && targetData.inventoryObj)
+			{
+				showInventoryWidget(targetData.inventoryObj.inventoryName,targetData.inventoryObj.inventoryCount);
+			}
+			else
+			{
+				hideInventoryWidget();
+			}			
 		}
-
+		else
+		{
+			hideInventoryWidget();
+		}
+		
 		// If There is no side widget data, then make sure the widget is hidden
 		if (! sideWidgetDataExists)
 		{
 			hideSideWidget();
 		}
 	}
-
-	function ProcessInventoryCountWidget(isValidTarget:Boolean):Void
-	{
-		if (viewInventoryCount && isValidTarget)
-		{
-			var inventoryData:Object = {dataObj:Object};
-			_global.skse.plugins.AHZmoreHUDPlugin.GetTargetInventoryCount(inventoryData);
-
-			if (inventoryData.dataObj == undefined || inventoryData.dataObj == null)
-			{
-				hideInventoryWidget();
-			}
-			else
-			{
-				showInventoryWidget(inventoryData.dataObj.inventoryName,inventoryData.dataObj.inventoryCount);
-			}
-		}
-		else
-		{
-			hideInventoryWidget();
-		}
-	}
-
+	
 	function ProcessPlayerWidget(isValidTarget:Boolean):Void
 	{
 		if (viewBottomInfo)
