@@ -170,7 +170,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			var outData:Object = {outObj:Object};
 			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 			var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);	
-			ProcessPlayerWidget(validTarget && hudIsVisible && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
+			ProcessPlayerWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 			ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 		}
 	}
@@ -181,14 +181,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		var outData:Object = {outObj:Object};
 		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 		var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);
-		ProcessPlayerWidget(validTarget && hudIsVisible && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
-		ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
+		ProcessPlayerWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
+		ProcessTargetAndInventoryWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 	}
 
 	function TurnOffWidgets():Void
 	{
 		ToggleState = 0;
-		ProcessPlayerWidget(false);
+		ProcessPlayerWidget(false, false);
 		ProcessTargetAndInventoryWidget(false);
 		hideBottomWidget();
 	}
@@ -199,6 +199,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		var validTarget:Boolean = false;
 		var activateWidgets:Boolean = false;
 		var outData:Object = {outObj:Object};
+		var forceDisplayOfPlayerData:Boolean = false;
 		
 		//showEquippedWidget(1);
 		if (abActivate)
@@ -219,8 +220,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			activateWidgets = true;
 		}
 
+		if (abActivate && activationMode == 2 && ToggleState == 1)
+		{
+			forceDisplayOfPlayerData = true;
+		}
+
 		// Process the bottom player widget
-		ProcessPlayerWidget(validTarget && activateWidgets && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
+		ProcessPlayerWidget(validTarget && activateWidgets, (outData && outData.outObj && outData.outObj.canCarry));
 		ProcessTargetAndInventoryWidget(validTarget && activateWidgets);
 		
 		// Always show regardless of activation mode
@@ -367,22 +373,42 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 	}
 	
-	function ProcessPlayerWidget(isValidTarget:Boolean):Void
+	function ProcessPlayerWidget(isValidTarget:Boolean, canCarry:Boolean):Void
 	{
-		if (isValidTarget)
+		if (viewBottomInfo)
 		{
 			var targetData:Object = {targetObj:Object};
 			var playerData:Object = {playerObj:Object};
 
-			// Get player data against the current target
-			_global.skse.plugins.AHZmoreHUDPlugin.GetTargetObjectData(targetData);
-			_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
-
-			if (targetData.targetObj && playerData.playerObj)
+			if (isValidTarget && canCarry)
 			{
-				// SHow the bottom widget data.  TODO: pass the object directly
-				showBottomWidget(targetData.targetObj.ratingOrDamage,targetData.targetObj.difference,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,targetData.targetObj.objWeight,targetData.targetObj.formType);
-			}	
+				// Get player data against the current target
+				_global.skse.plugins.AHZmoreHUDPlugin.GetTargetObjectData(targetData);
+				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
+
+				if (targetData.targetObj != undefined && targetData.targetObj != null && playerData.playerObj != undefined && playerData.playerObj != null)
+				{
+					// SHow the bottom widget data.  TODO: pass the object directly
+					showBottomWidget(targetData.targetObj.ratingOrDamage,targetData.targetObj.difference,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,targetData.targetObj.objWeight,targetData.targetObj.formType);
+				}
+				else
+				{
+					hideBottomWidget();
+				}
+			}
+			else if (ToggleState > 0)
+			{
+				// Only show player data
+				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
+				if (playerData.playerObj != undefined && playerData.playerObj != null)
+				{
+					showBottomWidget(0,0,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,0.0,AHZInventoryDefines.kNone);
+				}
+				else
+				{
+					hideBottomWidget();
+				}
+			}
 			else
 			{
 				hideBottomWidget();
