@@ -14,6 +14,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var Book_mc:MovieClip;
 	public var Inventory_mc:MovieClip;
 	public var content:MovieClip;
+	public var WVTranslated:TextField;
 	//public var Weapons_mc:MovieClip;
 	
 	// Public vars
@@ -40,6 +41,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	
 	// private variables
 	private var savedRolloverInfoText:String;
+	
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
@@ -122,7 +124,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Leaving book mode
 			if (! abShow)
 			{
-				ProcessReadBook(_global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget());
+				var outData:Object = {outObj:Object};
+				ProcessReadBook(_global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData));
 			}
 		}
 
@@ -157,10 +160,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			{
 				hideBottomWidget();
 			}
-			else
-			{
-				ProcessPlayerWidget(false);
-			}
 		}
 	}
 
@@ -168,9 +167,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	{
 		if (ToggleState > 0)
 		{
-			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
+			var outData:Object = {outObj:Object};
+			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 			var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);	
-			ProcessPlayerWidget(validTarget && hudIsVisible);
+			ProcessPlayerWidget(validTarget && hudIsVisible && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
 			ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 		}
 	}
@@ -178,9 +178,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	function TurnOnWidgets():Void
 	{
 		ToggleState = 1;
-		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
+		var outData:Object = {outObj:Object};
+		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 		var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);
-		ProcessPlayerWidget(validTarget && hudIsVisible);
+		ProcessPlayerWidget(validTarget && hudIsVisible && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
 		ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 	}
 
@@ -197,10 +198,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	{
 		var validTarget:Boolean = false;
 		var activateWidgets:Boolean = false;
+		var outData:Object = {outObj:Object};
+		
 		//showEquippedWidget(1);
 		if (abActivate)
 		{
-			validTarget = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
+			validTarget = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 			if (alphaTimer != null)
 			{
 				clearInterval(alphaTimer);
@@ -217,7 +220,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 
 		// Process the bottom player widget
-		ProcessPlayerWidget(validTarget && activateWidgets);
+		ProcessPlayerWidget(validTarget && activateWidgets && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
 		ProcessTargetAndInventoryWidget(validTarget && activateWidgets);
 		
 		// Always show regardless of activation mode
@@ -234,7 +237,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Show weight class if its armor
 			if (_root.HUDMovieBaseInstance.RolloverInfoText._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoText.htmlText != "")
 			{
-				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText);
+				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText, WVTranslated.text);
 				if (valueToWeight != "")
 				{
 					// Insert the weight class into the rolloverinfo textfield
@@ -366,40 +369,20 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	
 	function ProcessPlayerWidget(isValidTarget:Boolean):Void
 	{
-		if (viewBottomInfo)
+		if (isValidTarget)
 		{
 			var targetData:Object = {targetObj:Object};
 			var playerData:Object = {playerObj:Object};
 
-			if (isValidTarget)
-			{
-				// Get player data against the current target
-				_global.skse.plugins.AHZmoreHUDPlugin.GetTargetObjectData(targetData);
-				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
+			// Get player data against the current target
+			_global.skse.plugins.AHZmoreHUDPlugin.GetTargetObjectData(targetData);
+			_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
 
-				if (targetData.targetObj != undefined && targetData.targetObj != null && playerData.playerObj != undefined && playerData.playerObj != null)
-				{
-					// SHow the bottom widget data.  TODO: pass the object directly
-					showBottomWidget(targetData.targetObj.ratingOrDamage,targetData.targetObj.difference,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,targetData.targetObj.objWeight,targetData.targetObj.formType);
-				}
-				else
-				{
-					hideBottomWidget();
-				}
-			}
-			else if (ToggleState > 0)
+			if (targetData.targetObj && playerData.playerObj)
 			{
-				// Only show player data
-				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
-				if (playerData.playerObj != undefined && playerData.playerObj != null)
-				{
-					showBottomWidget(0,0,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,0.0,AHZInventoryDefines.kNone);
-				}
-				else
-				{
-					hideBottomWidget();
-				}
-			}
+				// SHow the bottom widget data.  TODO: pass the object directly
+				showBottomWidget(targetData.targetObj.ratingOrDamage,targetData.targetObj.difference,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,targetData.targetObj.objWeight,targetData.targetObj.formType);
+			}	
 			else
 			{
 				hideBottomWidget();

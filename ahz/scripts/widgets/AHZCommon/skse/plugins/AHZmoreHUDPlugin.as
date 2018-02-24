@@ -7,8 +7,8 @@ intrinsic class skse.plugins.AHZmoreHUDPlugin
 	static function GetTargetEffects(data:Object, calculateVentory:Boolean):Void;
 	static function InstallHooks():Void;
 	static function GetIsBookAndWasRead():Boolean;
-	static function GetIsValidTarget():Boolean;
+	static function GetIsValidTarget(data:Object):Boolean;
 	static function GetArmorWeightClassString():String;
 	static function GetBookSkillString():String;
-	static function GetValueToWeightString(data:String):String;
+	static function GetValueToWeightString(data:String, VWTranslation:String):String;
 }
