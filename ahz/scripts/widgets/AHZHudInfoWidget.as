@@ -14,6 +14,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var Book_mc:MovieClip;
 	public var Inventory_mc:MovieClip;
 	public var content:MovieClip;
+	public var WVTranslated:TextField;
 	//public var Weapons_mc:MovieClip;
 	
 	// Public vars
@@ -40,6 +41,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	
 	// private variables
 	private var savedRolloverInfoText:String;
+	
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
@@ -122,7 +124,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Leaving book mode
 			if (! abShow)
 			{
-				ProcessReadBook(_global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget());
+				var outData:Object = {outObj:Object};
+				ProcessReadBook(_global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData));
 			}
 		}
 
@@ -157,10 +160,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			{
 				hideBottomWidget();
 			}
-			else
-			{
-				ProcessPlayerWidget(false);
-			}
 		}
 	}
 
@@ -168,30 +167,29 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	{
 		if (ToggleState > 0)
 		{
-			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
+			var outData:Object = {outObj:Object};
+			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 			var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);	
-			ProcessPlayerWidget(validTarget && hudIsVisible);
-			ProcessTargetWidget(validTarget && hudIsVisible);
-			ProcessInventoryCountWidget(validTarget && hudIsVisible);
+			ProcessPlayerWidget(validTarget && hudIsVisible && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
+			ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 		}
 	}
 
 	function TurnOnWidgets():Void
 	{
 		ToggleState = 1;
-		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
+		var outData:Object = {outObj:Object};
+		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 		var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverText._alpha > 0);
-		ProcessPlayerWidget(validTarget && hudIsVisible);
-		ProcessTargetWidget(validTarget && hudIsVisible);
-		ProcessInventoryCountWidget(validTarget && hudIsVisible);
+		ProcessPlayerWidget(validTarget && hudIsVisible && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
+		ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 	}
 
 	function TurnOffWidgets():Void
 	{
 		ToggleState = 0;
 		ProcessPlayerWidget(false);
-		ProcessTargetWidget(false);
-		ProcessInventoryCountWidget(false);
+		ProcessTargetAndInventoryWidget(false);
 		hideBottomWidget();
 	}
 
@@ -200,10 +198,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	{
 		var validTarget:Boolean = false;
 		var activateWidgets:Boolean = false;
+		var outData:Object = {outObj:Object};
+		
 		//showEquippedWidget(1);
 		if (abActivate)
 		{
-			validTarget = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget();
+			validTarget = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 			if (alphaTimer != null)
 			{
 				clearInterval(alphaTimer);
@@ -220,9 +220,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 
 		// Process the bottom player widget
-		ProcessPlayerWidget(validTarget && activateWidgets);
-		ProcessTargetWidget(validTarget && activateWidgets);
-		ProcessInventoryCountWidget(validTarget && activateWidgets);
+		ProcessPlayerWidget(validTarget && activateWidgets && viewBottomInfo && outData && outData.outObj && outData.outObj.canCarry);
+		ProcessTargetAndInventoryWidget(validTarget && activateWidgets);
 		
 		// Always show regardless of activation mode
 		ProcessValueToWeight(validTarget);
@@ -238,7 +237,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Show weight class if its armor
 			if (_root.HUDMovieBaseInstance.RolloverInfoText._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoText.htmlText != "")
 			{
-				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText);
+				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText, WVTranslated.text);
 				if (valueToWeight != "")
 				{
 					// Insert the weight class into the rolloverinfo textfield
@@ -313,105 +312,77 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 	}
 
-	function ProcessTargetWidget(isValidTarget:Boolean):Void
+	function ProcessTargetAndInventoryWidget(isValidTarget:Boolean):Void
 	{
 		var sideWidgetDataExists:Boolean = false;
 
 		if (isValidTarget)
 		{
+			var targetData:Object = {effectsObj:Object, ingredientObj:Object, inventoryObj:Object};
+			
+			if (viewEffectsInfo || viewSideInfo || viewInventoryCount)
+			{
+				// Get the target effects
+				_global.skse.plugins.AHZmoreHUDPlugin.GetTargetEffects(targetData, viewInventoryCount);	
+			}
+						
 			if (viewEffectsInfo)
 			{
-				var effectData:Object = {effectsObj:Object};
-				// Get the target effects
-				_global.skse.plugins.AHZmoreHUDPlugin.GetTargetEffects(effectData);
-
 				// If effects exist
-				if (effectData.effectsObj != undefined && effectData.effectsObj != null)
+				if (targetData.effectsObj != undefined && targetData.effectsObj != null)
 				{
 					sideWidgetDataExists = true;
-					showSideWidget(effectData.effectsObj);
+					showSideWidget(targetData.effectsObj);
 				}
 			}
 			
 			if (viewSideInfo && !sideWidgetDataExists)
 			{
-				var ingredientData:Object = {ingredientObj:Object};
-				_global.skse.plugins.AHZmoreHUDPlugin.GetIngredientData(ingredientData);
-
 				// If the target is an ingredient
-				if (ingredientData.ingredientObj != undefined && ingredientData.ingredientObj != null)
+				if (targetData.ingredientObj != undefined && targetData.ingredientObj != null)
 				{
 					sideWidgetDataExists = true;
-					showSideWidget(ingredientData.ingredientObj);
+					showSideWidget(targetData.ingredientObj);
 				}
 			}
+			
+			if (viewInventoryCount && targetData.inventoryObj)
+			{
+				showInventoryWidget(targetData.inventoryObj.inventoryName,targetData.inventoryObj.inventoryCount);
+			}
+			else
+			{
+				hideInventoryWidget();
+			}			
 		}
-
+		else
+		{
+			hideInventoryWidget();
+		}
+		
 		// If There is no side widget data, then make sure the widget is hidden
 		if (! sideWidgetDataExists)
 		{
 			hideSideWidget();
 		}
 	}
-
-	function ProcessInventoryCountWidget(isValidTarget:Boolean):Void
-	{
-		if (viewInventoryCount && isValidTarget)
-		{
-			var inventoryData:Object = {dataObj:Object};
-			_global.skse.plugins.AHZmoreHUDPlugin.GetTargetInventoryCount(inventoryData);
-
-			if (inventoryData.dataObj == undefined || inventoryData.dataObj == null)
-			{
-				hideInventoryWidget();
-			}
-			else
-			{
-				showInventoryWidget(inventoryData.dataObj.inventoryName,inventoryData.dataObj.inventoryCount);
-			}
-		}
-		else
-		{
-			hideInventoryWidget();
-		}
-	}
-
+	
 	function ProcessPlayerWidget(isValidTarget:Boolean):Void
 	{
-		if (viewBottomInfo)
+		if (isValidTarget)
 		{
 			var targetData:Object = {targetObj:Object};
 			var playerData:Object = {playerObj:Object};
 
-			if (isValidTarget)
-			{
-				// Get player data against the current target
-				_global.skse.plugins.AHZmoreHUDPlugin.GetTargetObjectData(targetData);
-				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
+			// Get player data against the current target
+			_global.skse.plugins.AHZmoreHUDPlugin.GetTargetObjectData(targetData);
+			_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
 
-				if (targetData.targetObj != undefined && targetData.targetObj != null && playerData.playerObj != undefined && playerData.playerObj != null)
-				{
-					// SHow the bottom widget data.  TODO: pass the object directly
-					showBottomWidget(targetData.targetObj.ratingOrDamage,targetData.targetObj.difference,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,targetData.targetObj.objWeight,targetData.targetObj.formType);
-				}
-				else
-				{
-					hideBottomWidget();
-				}
-			}
-			else if (ToggleState > 0)
+			if (targetData.targetObj && playerData.playerObj)
 			{
-				// Only show player data
-				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
-				if (playerData.playerObj != undefined && playerData.playerObj != null)
-				{
-					showBottomWidget(0,0,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,0.0,AHZInventoryDefines.kNone);
-				}
-				else
-				{
-					hideBottomWidget();
-				}
-			}
+				// SHow the bottom widget data.  TODO: pass the object directly
+				showBottomWidget(targetData.targetObj.ratingOrDamage,targetData.targetObj.difference,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,targetData.targetObj.objWeight,targetData.targetObj.formType);
+			}	
 			else
 			{
 				hideBottomWidget();
@@ -482,6 +453,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	}
 
 	// @Papyrus
+	public function setBottomWidgetScale(percent:Number):Void
+	{
+		AHZBottomBar_mc._yscale  = (percent / 1.0);
+		AHZBottomBar_mc._xscale  = (percent / 1.0);
+	}
+
+	// @Papyrus
 	public function setInventoryWidgetPosition(xPercent:Number,yPercent:Number):Void
 	{
 		var tempVar:Number;
@@ -498,6 +476,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	}
 	
 	// @Papyrus
+	public function setInventoryWidgetScale(percent:Number):Void
+	{
+		Inventory_mc._yscale  = (percent / 1.0);
+		Inventory_mc._xscale  = (percent / 1.0);
+	}	
+	
+	// @Papyrus
 	public function setSideWidgetPosition(xPercent:Number,yPercent:Number):Void
 	{
 		var tempVar:Number;
@@ -512,6 +497,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		tempVar = (Stage.visibleRect.height/inverse)-(content.SizeHolder_mc._height/inverse);
 		content._y = tempVar;
 	}
+
+	// @Papyrus
+	public function setSideWidgetScale(percent:Number):Void
+	{
+		content._yscale  = (percent / 1.0);
+		content._xscale  = (percent / 1.0);
+	}	
 
 	// @Papyrus
 	public function updateSettings(sideView:Number, 
@@ -783,7 +775,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				}				
 				// Remove the right margin if it already exists
 				var formatText:String=_root.HUDMovieBaseInstance.RolloverInfoText.htmlText;
-				var tempArray:Array=formatText.split("RIGHTMARGIN=\"60\"");
+				var tempArray:Array=formatText.split("RIGHTMARGIN=\"40\"");
 				formatText=tempArray.join("RIGHTMARGIN=\"0\"");
 				_root.HUDMovieBaseInstance.RolloverInfoText.htmlText=formatText;
 
@@ -794,7 +786,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				_root.HUDMovieBaseInstance.RolloverInfoText.getLineMetrics(0).x +
 				_root.HUDMovieBaseInstance.RolloverInfoText.getLineMetrics(0).width;
 				var theY:Number = _root.HUDMovieBaseInstance._y + _root.HUDMovieBaseInstance.RolloverInfoText._y;
-				theY = theY + 7.0;
+				theY = theY + 10.0;
 				
 
 				// Convert to this coordinates
@@ -807,7 +799,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				// Add a right margin to the rollover textfield to give room for the read image
 				var formatText:String=_root.HUDMovieBaseInstance.RolloverInfoText.htmlText;
 				var tempArray:Array=formatText.split("RIGHTMARGIN=\"0\"");
-				formatText=tempArray.join("RIGHTMARGIN=\"60\"");
+				formatText=tempArray.join("RIGHTMARGIN=\"40\"");
 				_root.HUDMovieBaseInstance.RolloverInfoText.htmlText=formatText;
 			}
 			else
