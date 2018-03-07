@@ -6,6 +6,7 @@ import flash.geom.Transform;
 import flash.geom.ColorTransform;
 import flash.geom.Matrix;
 import flash.display.BitmapData;
+import gfx.events.EventDispatcher;
 
 class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 {
@@ -15,11 +16,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var Inventory_mc:MovieClip;
 	public var content:MovieClip;
 	public var WVTranslated:TextField;
+	public var LevelTranslated:TextField;
 	//public var Weapons_mc:MovieClip;
 	
 	// Public vars
 	public var ToggleState:Number;
-
+	public var prevEnemyPercent:Number;
 
 	// Options
 	private var viewSideInfo:Boolean;
@@ -50,11 +52,18 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var maxXY:Object;
 	private var minXY:Object;
 
+	
+
 	// Statics
 	private static var hooksInstalled:Boolean = false;
 
 	/* INITIALIZATION */
 
+	//ChangeWatcher.watch(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance, "text", watcherListener);
+	
+	//var listenerObject:Object;
+	
+	
 	public function AHZHudInfoWidget()
 	{
 		super();
@@ -64,7 +73,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		minXY = {x:Stage.visibleRect.x + Stage.visibleRect.width,y:Stage.visibleRect.y + Stage.visibleRect.height};
 		this._parent.globalToLocal(maxXY);
 		this._parent.globalToLocal(minXY);
-
+		EventDispatcher.initialize(this);
 		// Anchor this widget to the top left corner
 		this._y = maxXY.y;
 		this._x = maxXY.x;
@@ -81,9 +90,26 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Apply hooks to hook events
 			hookFunction(_root.HUDMovieBaseInstance,"SetCrosshairTarget",this,"SetCrosshairTarget");
 			hookFunction(_root.HUDMovieBaseInstance,"ShowElements",this,"ShowElements");
+			hookFunction(_root.HUDMovieBaseInstance,"SetCompassAngle",this,"SetCompassAngle");
+			//SetCompassMarkers
+			//hookFunction(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance,"SetText",this,"SetText");
+			//_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.addEventListener('text',myChangeHandler) ;
+			
+			//listenerObject = new Object();
+			/*_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.onChanged = function(textfield_txt:TextField) {
+				
+				_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(textfield_txt.text);
+				// Your code here
+				UpdateEnemyLevel();
+			}	*/
 			_global.skse.plugins.AHZmoreHUDPlugin.InstallHooks();
+			
+			
+			
 			hooksInstalled = true;
-		}
+		}			
+			//_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.addListener(listenerObject);
+			
 
 		// Initialize variables
 		viewSideInfo = false;
@@ -118,7 +144,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		hudModes[3] = "Swimming"
 		hudModes[4] = "HorseMode"
 		hudModes[5] = "WarHorseMode"*/
-
+//_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.addEventListener("textChange", this, "UpdateEnemyLevel");
 		if (aMode == "BookMode")
 		{
 			// Leaving book mode
@@ -234,6 +260,77 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ProcessBookSkill(validTarget);
 		ProcessWeightClass(validTarget);
 		ProcessReadBook(validTarget);
+	}
+
+
+
+	function SetCompassAngle(aPlayerAngle: Number, aCompassAngle: Number, abShowCompass: Boolean)
+	{	
+		if (_root.HUDMovieBaseInstance.EnemyHealth_mc._alpha > 0 && _root.HUDMovieBaseInstance.EnemyHealth_mc._visible &&
+			_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._visible &&
+			_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._alpha > 0 && _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._visible
+			)
+		{
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text);
+			
+			//prevEnemyPercent = aPercent;
+
+				var levelText:String;	
+				levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;
+				var textIndex:Number;
+				textIndex = levelText.lastIndexOf(" (");
+				if (textIndex < 0)
+				{
+					var outData:Object = {outObj:Object};
+					_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.text);	
+					if (outData && outData.outObj)
+					{					
+						//levelText = levelText.substring(0, textIndex);
+						levelText = levelText + " (" + outData.outObj.EnemyLevel.toString() + ")";
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text = levelText;
+						
+						
+						var textWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.getLineMetrics(0).width;
+						var fieldWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._width;
+						var fillPercent = (textWidth / fieldWidth) * 100;
+						
+						fillPercent = Math.min(100, Math.max(fillPercent, 0));
+						var iMeterFrame: Number = Math.floor(fillPercent);
+						_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Text " + textWidth.toString());
+						_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Field " + fieldWidth.toString());
+						_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Fill " + fillPercent.toString());
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);
+						_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text);
+					}
+				}
+				
+				//levelText = levelText + " - " + LevelTranslated.text + "  ";
+				
+				/*if (outData.outObj.EnemyLevel < outData.outObj.PlayerLevel){
+					levelText = levelText + " <font color=\'#189515\'>(" + outData.outObj.EnemyLevel.toString() + ")</font>";
+				}
+				else if (outData.outObj.EnemyLevel > outData.outObj.PlayerLevel){
+					levelText = levelText + " <font color=\'#FF0000\'>(" + outData.outObj.EnemyLevel.toString() + ")</font>";
+				}
+				else
+				{*/
+					//levelText = levelText + " (" + outData.outObj.EnemyLevel.toString() + ")";
+					
+				/*}*/
+				
+
+				
+				//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(levelText);
+			//}
+		}
+		else
+		{
+			_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("off");
+		}
+		/*else
+		{
+			prevEnemyPercent = -1;
+		}*/
 	}
 
 	function ProcessValueToWeight(isValidTarget:Boolean):Void
