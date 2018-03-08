@@ -44,7 +44,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	
 	// private variables
 	private var savedRolloverInfoText:String;
-	
+	private var savedEnemyTextInfo:String;
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
@@ -252,17 +252,16 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
 		{	
 			var levelText:String;	
+			_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;
 			levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText;
+			
+			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
 			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(levelText);
-			var textIndex:Number;
-			textIndex = levelText.toLowerCase().indexOf(" (</font");
-			if (textIndex < 0)
 			{
 				var outData:Object = {outObj:Object};
 				_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
 				if (outData && outData.outObj)
-				{					
-				
+				{						
 					// Get the percentage away from the player level
 					var percentLevelFromPlayer = (((outData.outObj.EnemyLevel-outData.outObj.PlayerLevel)/outData.outObj.PlayerLevel) * 100)
 					var maxPercent:Number = showEnemyLevelMaxPercent;
@@ -313,7 +312,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 					fillPercent = Math.min(100, Math.max(fillPercent, 0));
 					var iMeterFrame: Number = Math.floor(fillPercent);
 					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);
-				}
+					savedEnemyTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;
+				}				
 			}
 		}
 	}
