@@ -15,11 +15,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var Inventory_mc:MovieClip;
 	public var content:MovieClip;
 	public var WVTranslated:TextField;
+	public var LevelTranslated:TextField;
 	//public var Weapons_mc:MovieClip;
 	
 	// Public vars
 	public var ToggleState:Number;
-
+	public var prevEnemyPercent:Number;
 
 	// Options
 	private var viewSideInfo:Boolean;
@@ -38,10 +39,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var activationMode:Number;
 	private var showTargetWeight:Boolean;
 	private var showValueToWeight:Boolean;
+	private var showEnemyLevel:Boolean;
+	private var showEnemyLevelMaxPercent:Number;
 	
 	// private variables
 	private var savedRolloverInfoText:String;
-	
+	private var savedEnemyTextInfo:String;
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
@@ -50,11 +53,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var maxXY:Object;
 	private var minXY:Object;
 
+	
 	// Statics
 	private static var hooksInstalled:Boolean = false;
 
 	/* INITIALIZATION */
-
+	
 	public function AHZHudInfoWidget()
 	{
 		super();
@@ -81,10 +85,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Apply hooks to hook events
 			hookFunction(_root.HUDMovieBaseInstance,"SetCrosshairTarget",this,"SetCrosshairTarget");
 			hookFunction(_root.HUDMovieBaseInstance,"ShowElements",this,"ShowElements");
+			hookFunction(_root.HUDMovieBaseInstance,"SetCompassAngle",this,"SetCompassAngle");
 			_global.skse.plugins.AHZmoreHUDPlugin.InstallHooks();
 			hooksInstalled = true;
 		}
-
+			
 		// Initialize variables
 		viewSideInfo = false;
 		viewEffectsInfo = false;
@@ -104,7 +109,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		savedRolloverInfoText = "";
 		showTargetWeight = false;
 		showValueToWeight = true;
-		
+		showEnemyLevel = true;
+		showEnemyLevelMaxPercent = 25;
 		//Weapons_mc.LeftItem.EquipIcon.gotoAndStop("LeftEquip");
 		//Weapons_mc.RightItem.EquipIcon.gotoAndStop("RightEquip");
 		//Weapons_mc.PowerItem.EquipIcon.gotoAndStop("Equipped");
@@ -234,6 +240,82 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ProcessBookSkill(validTarget);
 		ProcessWeightClass(validTarget);
 		ProcessReadBook(validTarget);
+	}
+
+	function interpolate(pBegin:Number, pEnd:Number, pMax:Number, pStep:Number):Number {
+		return pBegin + Math.floor((pEnd - pBegin) * pStep / pMax);
+	}
+
+	function SetCompassAngle(aPlayerAngle: Number, aCompassAngle: Number, abShowCompass: Boolean)
+	{		
+		// This function is hooked and gets fired alot,  we need to limit the use as much as possible
+		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
+		{	
+			var levelText:String;	
+			_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;
+			levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText;
+			
+			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(levelText);
+			{
+				var outData:Object = {outObj:Object};
+				_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
+				if (outData && outData.outObj)
+				{						
+					// Get the percentage away from the player level
+					var percentLevelFromPlayer = (((outData.outObj.EnemyLevel-outData.outObj.PlayerLevel)/outData.outObj.PlayerLevel) * 100)
+					var maxPercent:Number = showEnemyLevelMaxPercent;
+					var minPercent:Number = showEnemyLevelMaxPercent * -1.0;
+								
+					var R:Number;
+					var G:Number;
+					var B:Number;
+					var RGB:Number;
+					var fontColor:String;
+					if (percentLevelFromPlayer < 0){
+						if (percentLevelFromPlayer < minPercent)
+						{
+							percentLevelFromPlayer = minPercent;
+						}
+						
+						// Start with the same green that is used throughout the menus
+						R = interpolate(0xFF,0x18,minPercent, percentLevelFromPlayer);
+						G = interpolate(0xFF,0x95,minPercent, percentLevelFromPlayer);
+						B = interpolate(0xFF,0x15,minPercent, percentLevelFromPlayer);
+						RGB = (R * 65536) + (G * 256) + B;
+						fontColor = RGB.toString(16);
+					}
+					else if (percentLevelFromPlayer > 0){
+						if (percentLevelFromPlayer > maxPercent)
+						{
+							percentLevelFromPlayer = maxPercent;
+						}
+						R = interpolate(0xFF,0xFF,maxPercent, percentLevelFromPlayer);
+						G = interpolate(0xFF,0x00,maxPercent, percentLevelFromPlayer);
+						B = interpolate(0xFF,0x00,maxPercent, percentLevelFromPlayer);
+						RGB = (R * 65536) + (G * 256) + B;
+						fontColor = RGB.toString(16);						
+					}
+					else
+					{
+						fontColor = "FFFFFF";
+					}
+					
+					levelText = levelText + " (<font color=\'#" + fontColor + "\'>" + outData.outObj.EnemyLevel.toString() + "</font>)";
+					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;
+					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText = levelText;
+					
+					// Caclulate the new position for the brackets
+					var textWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.getLineMetrics(0).width;
+					var fieldWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._width;
+					var fillPercent = (textWidth / fieldWidth) * 100;
+					fillPercent = Math.min(100, Math.max(fillPercent, 0));
+					var iMeterFrame: Number = Math.floor(fillPercent);
+					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);
+					savedEnemyTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;
+				}				
+			}
+		}
 	}
 
 	function ProcessValueToWeight(isValidTarget:Boolean):Void
@@ -546,8 +628,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 								   ToggleStateValue:Number,
 								   showBookSkillValue:Number,
 								   showTargetWeightValue:Number,
-								   showValueToWeightValue:Number):Void {
-		
+								   showValueToWeightValue:Number,
+								   showEnemyLevelValue:Number,
+								   showEnemyLevelMaxPercentValue:Number):Void {
+				
 		viewSideInfo = (sideView>=1);
 		viewBottomInfo = (bottomView>=1);
 		viewInventoryCount = (inventoryCount>=1);
@@ -563,7 +647,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showBookSkill = (showBookSkillValue>=1);
 		showTargetWeight = (showTargetWeightValue>=1);
 		showValueToWeight = (showValueToWeightValue>=1);
-		
+		showEnemyLevel = (showEnemyLevelValue>=1);
+		showEnemyLevelMaxPercent = showEnemyLevelMaxPercentValue;
 		RefreshWidgets();
 	}
 
