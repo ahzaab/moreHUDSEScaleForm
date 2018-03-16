@@ -1,17 +1,18 @@
-﻿import gfx.io.GameDelegate;
+﻿import flash.display.BitmapData;
+import gfx.io.GameDelegate;
 //import skyui.widgets.WidgetBase;
 import Shared.GlobalFunc;
 import skyui.util.Debug;
 import flash.geom.Transform;
 import flash.geom.ColorTransform;
 import flash.geom.Matrix;
-import flash.display.BitmapData;
+
 
 class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 {
 	//Widgets
 	public var AHZBottomBar_mc:MovieClip;
-	public var Book_mc:MovieClip;
+	//public var Book_mc:MovieClip;
 	public var Inventory_mc:MovieClip;
 	public var content:MovieClip;
 	public var WVTranslated:TextField;
@@ -40,14 +41,17 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var showTargetWeight:Boolean;
 	private var showValueToWeight:Boolean;
 	private var showEnemyLevel:Boolean;
-	private var showEnemyLevelMaxPercent:Number;
+	private var showEnemyLevelMax:Number;
+	private var showEnemyLevelMin:Number;
 	
 	// private variables
 	private var savedRolloverInfoText:String;
 	private var savedEnemyTextInfo:String;
+	private var savedEnemyHtmlTextInfo:String;
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
+	
 
 	// Rects
 	private var maxXY:Object;
@@ -78,7 +82,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		hideSideWidget();
 		hideBottomWidget();
 		hideInventoryWidget();
-		Book_mc._alpha = 0;
+		//Book_mc._alpha = 0;
 
 		if (! hooksInstalled)
 		{
@@ -110,7 +114,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showTargetWeight = false;
 		showValueToWeight = true;
 		showEnemyLevel = true;
-		showEnemyLevelMaxPercent = 25;
+		showEnemyLevelMax = 10;
+		showEnemyLevelMin = 10;
 		//Weapons_mc.LeftItem.EquipIcon.gotoAndStop("LeftEquip");
 		//Weapons_mc.RightItem.EquipIcon.gotoAndStop("RightEquip");
 		//Weapons_mc.PowerItem.EquipIcon.gotoAndStop("Equipped");
@@ -130,8 +135,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Leaving book mode
 			if (! abShow)
 			{
-				var outData:Object = {outObj:Object};
-				ProcessReadBook(_global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData));
+				//var outData:Object = {outObj:Object};
+				//ProcessReadBook(_global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData));
 			}
 		}
 
@@ -160,7 +165,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			hideSideWidget();	
 			hideInventoryWidget();
-			Book_mc._alpha = 0;
+			//Book_mc._alpha = 0;
 			
 			if (ToggleState == 0)
 			{
@@ -199,9 +204,19 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		hideBottomWidget();
 	}
 
+	function appendHtmlToEnd(htmlText:String, appendedHtml:String):String
+	{
+		var stringIndex:Number;
+		stringIndex = htmlText.lastIndexOf("</P></TEXTFORMAT>");
+		var firstText:String = htmlText.substr(0,stringIndex);
+		var secondText:String = htmlText.substr(stringIndex,htmlText.length - stringIndex);						
+        return firstText + appendedHtml + secondText;
+	}
+
 	// Hooks the main huds function
 	function SetCrosshairTarget(abActivate:Boolean,aName:String,abShowButton:Boolean,abTextOnly:Boolean,abFavorMode:Boolean,abShowCrosshair:Boolean,aWeight:Number,aCost:Number,aFieldValue:Number,aFieldText):Void
-	{
+	{		
+		
 		var validTarget:Boolean = false;
 		var activateWidgets:Boolean = false;
 		var outData:Object = {outObj:Object};
@@ -252,58 +267,73 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
 		{	
 			var levelText:String;	
-			_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;
-			levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText;
 			
-			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
+			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text && 
+				savedEnemyHtmlTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText)
 			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(levelText);
-			{
+			{				
 				var outData:Object = {outObj:Object};
 				_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
 				if (outData && outData.outObj)
 				{						
-					// Get the percentage away from the player level
-					var percentLevelFromPlayer = (((outData.outObj.EnemyLevel-outData.outObj.PlayerLevel)/outData.outObj.PlayerLevel) * 100)
-					var maxPercent:Number = showEnemyLevelMaxPercent;
-					var minPercent:Number = showEnemyLevelMaxPercent * -1.0;
-								
-					var R:Number;
-					var G:Number;
-					var B:Number;
-					var RGB:Number;
-					var fontColor:String;
-					if (percentLevelFromPlayer < 0){
-						if (percentLevelFromPlayer < minPercent)
-						{
-							percentLevelFromPlayer = minPercent;
+					if (showEnemyLevelMax > 0 && showEnemyLevelMin > 0)
+					{	
+						// Get the percentage away from the player level
+						//var percentLevelFromPlayer = (((outData.outObj.EnemyLevel-outData.outObj.PlayerLevel)/outData.outObj.PlayerLevel) * 100)
+						var deltaLevelFromPlayer = outData.outObj.EnemyLevel-outData.outObj.PlayerLevel;
+						var maxPercent:Number = showEnemyLevelMax;
+						var minPercent:Number = showEnemyLevelMin * -1.0;
+									
+						var R:Number;
+						var G:Number;
+						var B:Number;
+						var RGB:Number;
+						var fontColor:String;
+						if (deltaLevelFromPlayer < 0){
+							if (deltaLevelFromPlayer < minPercent)
+							{
+								deltaLevelFromPlayer = minPercent;
+							}
+							
+							// Start with the same green that is used throughout the menus
+							R = interpolate(0xFF,0x18,minPercent, deltaLevelFromPlayer);
+							G = interpolate(0xFF,0x95,minPercent, deltaLevelFromPlayer);
+							B = interpolate(0xFF,0x15,minPercent, deltaLevelFromPlayer);
+							RGB = (R * 65536) + (G * 256) + B;
+							fontColor = RGB.toString(16);
 						}
-						
-						// Start with the same green that is used throughout the menus
-						R = interpolate(0xFF,0x18,minPercent, percentLevelFromPlayer);
-						G = interpolate(0xFF,0x95,minPercent, percentLevelFromPlayer);
-						B = interpolate(0xFF,0x15,minPercent, percentLevelFromPlayer);
-						RGB = (R * 65536) + (G * 256) + B;
-						fontColor = RGB.toString(16);
-					}
-					else if (percentLevelFromPlayer > 0){
-						if (percentLevelFromPlayer > maxPercent)
-						{
-							percentLevelFromPlayer = maxPercent;
+						else if (deltaLevelFromPlayer > 0){
+							if (deltaLevelFromPlayer > maxPercent)
+							{
+								deltaLevelFromPlayer = maxPercent;
+							}
+							R = interpolate(0xFF,0xFF,maxPercent, deltaLevelFromPlayer);
+							G = interpolate(0xFF,0x00,maxPercent, deltaLevelFromPlayer);
+							B = interpolate(0xFF,0x00,maxPercent, deltaLevelFromPlayer);
+							RGB = (R * 65536) + (G * 256) + B;
+							fontColor = RGB.toString(16);						
 						}
-						R = interpolate(0xFF,0xFF,maxPercent, percentLevelFromPlayer);
-						G = interpolate(0xFF,0x00,maxPercent, percentLevelFromPlayer);
-						B = interpolate(0xFF,0x00,maxPercent, percentLevelFromPlayer);
-						RGB = (R * 65536) + (G * 256) + B;
-						fontColor = RGB.toString(16);						
+						else
+						{
+							fontColor = "FFFFFF";
+						}
+					
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;
+						levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText;			
+						levelText = levelText + " (<font color=\'#" + fontColor + "\'>" + outData.outObj.EnemyLevel.toString() + "</font>)";
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText = levelText;
+						savedEnemyHtmlTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText;			
 					}
 					else
 					{
-						fontColor = "FFFFFF";
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
+						levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;									
+						levelText = levelText + " (" + outData.outObj.EnemyLevel.toString() + ")";
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
+						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text = levelText;
+						savedEnemyTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;	
 					}
-					
-					levelText = levelText + " (<font color=\'#" + fontColor + "\'>" + outData.outObj.EnemyLevel.toString() + "</font>)";
-					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;
-					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText = levelText;
 					
 					// Caclulate the new position for the brackets
 					var textWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.getLineMetrics(0).width;
@@ -311,15 +341,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 					var fillPercent = (textWidth / fieldWidth) * 100;
 					fillPercent = Math.min(100, Math.max(fillPercent, 0));
 					var iMeterFrame: Number = Math.floor(fillPercent);
-					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);
-					savedEnemyTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;
+					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);						
 				}				
 			}
 		}
 	}
 
 	function ProcessValueToWeight(isValidTarget:Boolean):Void
-	{
+	{		
 		if (showValueToWeight && isValidTarget)
 		{
 			// Show weight class if its armor
@@ -329,16 +358,32 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				if (valueToWeight != "")
 				{
 					// Insert the weight class into the rolloverinfo textfield
-					var stringIndex:Number;
+					/*var stringIndex:Number;
 					var rolloverText:String = _root.HUDMovieBaseInstance.RolloverInfoText.htmlText;
 					stringIndex = rolloverText.lastIndexOf("</P></TEXTFORMAT>");
 					var firstText:String = rolloverText.substr(0,stringIndex);
-					var secondText:String = rolloverText.substr(stringIndex,rolloverText.length - stringIndex);
+					var secondText:String = rolloverText.substr(stringIndex,rolloverText.length - stringIndex);				
 					var formattedText = valueToWeight;
-					_root.HUDMovieBaseInstance.RolloverInfoText.htmlText = firstText + formattedText + secondText;
+					var ahzknown:BitmapData = BitmapData.loadBitmap("ahzknown.png");
+					_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(ahzknown);
+					_root.HUDMovieBaseInstance.RolloverInfoText.SetText(firstText + formattedText + secondText + "<img src=\'ahzknown.png\' height=\'32\' width=\'32\'>", true);	
+					_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText);*/
+					
+					_root.HUDMovieBaseInstance.RolloverInfoText.htmlText = 
+						appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText, valueToWeight); 
 				}
 			}
 		}
+	}
+
+	function ProcessKnownEnchantment(isValidTarget:Boolean):Void
+	{
+		var b1 = BitmapData.loadBitmap("ahzknown.png"); 
+		var a = new Array; 
+		a[0] = { subString:"xiao1", image:b1, width:20, height:20, id:"smxiao1" };  //baseLineY:0, 
+		_root.HUDMovieBaseInstance.RolloverInfoText.setImageSubstitutions(a);
+		_root.HUDMovieBaseInstance.RolloverInfoText.htmlText = 
+		appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText, "     xiao1"); 		
 	}
 
 	function ProcessWeightClass(isValidTarget:Boolean):Void
@@ -630,7 +675,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 								   showTargetWeightValue:Number,
 								   showValueToWeightValue:Number,
 								   showEnemyLevelValue:Number,
-								   showEnemyLevelMaxPercentValue:Number):Void {
+								   showEnemyLevelMaxValue:Number,
+								   showEnemyLevelMinValue:Number):Void {
 				
 		viewSideInfo = (sideView>=1);
 		viewBottomInfo = (bottomView>=1);
@@ -648,7 +694,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showTargetWeight = (showTargetWeightValue>=1);
 		showValueToWeight = (showValueToWeightValue>=1);
 		showEnemyLevel = (showEnemyLevelValue>=1);
-		showEnemyLevelMaxPercent = showEnemyLevelMaxPercentValue;
+		showEnemyLevelMax = showEnemyLevelMaxValue;
+		showEnemyLevelMin = showEnemyLevelMinValue;
 		RefreshWidgets();
 	}
 
@@ -879,7 +926,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 			if (bookRead&&_root.HUDMovieBaseInstance.RolloverInfoText._alpha>0&&_root.HUDMovieBaseInstance.RolloverInfoText.htmlText!="")
 			{
-				// Restore the RolloverInfoText if this was a skill book that was read
+				/*// Restore the RolloverInfoText if this was a skill book that was read
 				if (savedRolloverInfoText != "")
 				{
 					_root.HUDMovieBaseInstance.RolloverInfoText.htmlText = savedRolloverInfoText;
@@ -911,17 +958,25 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				var formatText:String=_root.HUDMovieBaseInstance.RolloverInfoText.htmlText;
 				var tempArray:Array=formatText.split("RIGHTMARGIN=\"0\"");
 				formatText=tempArray.join("RIGHTMARGIN=\"40\"");
-				_root.HUDMovieBaseInstance.RolloverInfoText.htmlText=formatText;
+				_root.HUDMovieBaseInstance.RolloverInfoText.htmlText=formatText;*/
+				
+				var b1 = BitmapData.loadBitmap("eyeImage.png"); 
+				var a = new Array; 
+				a[0] = { subString:"bxiao1", image:b1, width:17, height:17, id:"smbxiao1" };  //baseLineY:0, 
+				_root.HUDMovieBaseInstance.RolloverInfoText.setImageSubstitutions(a);
+				_root.HUDMovieBaseInstance.RolloverInfoText.htmlText = 
+				appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText, "     bxiao1"); 				
+				
 			}
-			else
+			/*else
 			{
 				Book_mc._alpha=0;
-			}
+			}*/
 		}
-		else
+		/*else
 		{
 			Book_mc._alpha=0;
-		}
+		}*/
 	}
 
 	public function log(txt:String):Void

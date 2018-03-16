@@ -12,7 +12,7 @@ intrinsic class skse.plugins.AHZmoreHUDPlugin
 	static function GetBookSkillString():String;
 	static function GetValueToWeightString(data:String, VWTranslation:String):String;
 	static function GetEnemyInformation(data:Object, LevelTranslation:String):Void;
-	
+	static function IsAKnownEnchantedItem():Boolean;
 	
 	static function AHZLog(data:String):String;
 }
