@@ -219,7 +219,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				a[0] = { subString:"[" + imageName + "]", image:b1, width:width, height:height, id:"id" + imageName };  //baseLineY:0, 
 				textField.setImageSubstitutions(a);
 				textField.htmlText = 
-				appendHtmlToEnd(textField.htmlText, "     " + "[" + imageName + "]");
+				appendHtmlToEnd(textField.htmlText, " " + "[" + imageName + "]");
 			}
 		}
 	}
@@ -263,10 +263,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		
 		// Always show regardless of activation mode
 		ProcessValueToWeight(validTarget);
+		ProcessKnownEnchantment(validTarget);
 		ProcessBookSkill(validTarget);
 		ProcessWeightClass(validTarget);
 		ProcessReadBook(validTarget);
-		ProcessKnownEnchantment(validTarget);
 	}
 
 	function interpolate(pBegin:Number, pEnd:Number, pMax:Number, pStep:Number):Number {
@@ -282,12 +282,16 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			
 			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text && 
 				savedEnemyHtmlTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText)
-			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(levelText);
 			{				
 				var outData:Object = {outObj:Object};
 				_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
 				if (outData && outData.outObj)
 				{						
+					if (outData.outObj.EnemyLevel < 1 && outData.outObj.PlayerLevel < 1)
+					{
+						return;
+					}
+				
 					if (showEnemyLevelMax > 0 && showEnemyLevelMin > 0)
 					{	
 						// Get the delta of level from player
@@ -380,9 +384,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			var knownEnchantment:Boolean=_global.skse.plugins.AHZmoreHUDPlugin.IsAKnownEnchantedItem();
 
-			if (knownEnchantment && _root.HUDMovieBaseInstance.RolloverInfoText._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoText.htmlText!="")
+			if (knownEnchantment && _root.HUDMovieBaseInstance.RolloverText._alpha > 0 && _root.HUDMovieBaseInstance.RolloverText.htmlText!="")
 			{
-				appendImageToEnd(_root.HUDMovieBaseInstance.RolloverInfoText, "ahzknown.png", 25, 25);
+				_root.HUDMovieBaseInstance.RolloverText.html=true;
+				appendImageToEnd(_root.HUDMovieBaseInstance.RolloverText, "ahzknown.png", 17, 17);
 			}
 		}
 	}
@@ -880,10 +885,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			var bookRead:Boolean=_global.skse.plugins.AHZmoreHUDPlugin.GetIsBookAndWasRead();
 
-			if (bookRead&&_root.HUDMovieBaseInstance.RolloverInfoText._alpha>0&&_root.HUDMovieBaseInstance.RolloverInfoText.htmlText!="")
+			if (bookRead&&_root.HUDMovieBaseInstance.RolloverText._alpha>0&&_root.HUDMovieBaseInstance.RolloverText.htmlText!="")
 			{
-				appendImageToEnd(_root.HUDMovieBaseInstance.RolloverInfoText, "eyeImage.png", 17, 17);
-				
+				_root.HUDMovieBaseInstance.RolloverText.html=true;
+				appendImageToEnd(_root.HUDMovieBaseInstance.RolloverText, "eyeImage.png", 17, 17);				
 			}
 		}
 	}
