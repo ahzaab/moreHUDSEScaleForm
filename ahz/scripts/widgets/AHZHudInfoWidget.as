@@ -46,10 +46,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var savedRolloverInfoText:String;
 	private var savedEnemyTextInfo:String;
 	private var savedEnemyHtmlTextInfo:String;
+	private var savedEnemyLevelValue:String;
+	private var savedEnemyLevelNumber:Number;
+	private var savedPlayerLevelNumber:Number
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
-	
+	private var levelUpdateTimer:Number;
 
 	// Rects
 	private var maxXY:Object;
@@ -269,6 +272,43 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ProcessReadBook(validTarget);
 	}
 
+	function updateLevelTimer()
+	{
+		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
+		{
+			UpdateEnemyLevelValues();
+		}
+		else
+		{
+			if (levelUpdateTimer)
+			{
+				clearInterval(levelUpdateTimer);
+			}	
+			savedEnemyTextInfo = "";
+			savedEnemyLevelValue = "";	
+		}
+		
+		/*if (levelUpdateTimer)
+		{
+			clearInterval(levelUpdateTimer);
+		}
+		// Set an interval to disable hide the widgets.  This is for less intrusive hud 
+		levelUpdateTimer = setInterval(this,"updateLevelTimer",2000);		*/			
+	}
+	
+	function UpdateEnemyLevelValues()
+	{
+		var outData:Object = {outObj:Object};
+		_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
+		if (outData && outData.outObj)
+		{				
+			savedEnemyLevelNumber = outData.outObj.EnemyLevel;
+			savedPlayerLevelNumber = outData.outObj.PlayerLevel;	
+			
+			_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Update: " + savedEnemyLevelNumber.toString() + ", " + savedPlayerLevelNumber.toString());
+		}	
+	}
+
 	function interpolate(pBegin:Number, pEnd:Number, pMax:Number, pStep:Number):Number {
 		return pBegin + Math.floor((pEnd - pBegin) * pStep / pMax);
 	}
@@ -279,23 +319,50 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
 		{	
 			var levelText:String;	
-			
-			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text && 
-				savedEnemyHtmlTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText)
+			var updateImmediately:Boolean = false;
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(savedEnemyTextInfo + "\r\n");
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text + "\r\n");
+			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
 			{				
-				var outData:Object = {outObj:Object};
-				_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
-				if (outData && outData.outObj)
-				{						
-					if (outData.outObj.EnemyLevel < 1 && outData.outObj.PlayerLevel < 1)
-					{
-						return;
-					}
+				var idx:Number = savedEnemyTextInfo.lastIndexOf(savedEnemyLevelValue);
 				
-					if (showEnemyLevelMax > 0 && showEnemyLevelMin > 0)
+				if (idx <= 0)
+				{
+					updateImmediately = true;
+				}
+				else
+				{
+					var stringWithoutLevelValue:String = savedEnemyTextInfo.substr(0, idx);
+					// Just to see if the name changed, if it did then we are targetting a different enemy
+					if (stringWithoutLevelValue != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
+					{
+						updateImmediately = true;
+					}
+				}
+			
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(stringWithoutLevelValue + "\r\n");
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text + "\r\n");			
+			
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("---" + "\r\n" + "---" + "\r\n");
+			
+				if (updateImmediately)
+				{
+					UpdateEnemyLevelValues();
+					
+					if (levelUpdateTimer)
+					{
+						clearInterval(levelUpdateTimer);
+					}
+					// Set an interval to disable hide the widgets.  This is for less intrusive hud 
+					levelUpdateTimer = setInterval(this,"updateLevelTimer",2000);						
+				}
+						
+				if (!(savedPlayerLevelNumber < 1 && savedEnemyLevelNumber < 1))
+				{						
+					if (showEnemyLevelMax > 0 && showEnemyLevelMin > 0 )
 					{	
 						// Get the delta of level from player
-						var deltaLevelFromPlayer = outData.outObj.EnemyLevel-outData.outObj.PlayerLevel;
+						var deltaLevelFromPlayer = savedEnemyLevelNumber-savedPlayerLevelNumber;
 						var maxPercent:Number = showEnemyLevelMax;
 						var minPercent:Number = showEnemyLevelMin * -1.0;
 									
@@ -334,19 +401,19 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 						}
 					
 						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;	
-						levelText = " (<font color=\'#" + fontColor + "\'>" + outData.outObj.EnemyLevel.toString() + "</font>)";
+						levelText = " (<font color=\'#" + fontColor + "\'>" + savedEnemyLevelNumber.toString() + "</font>)";
+						
 						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText = 
-						    appendHtmlToEnd(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText, levelText);
+							appendHtmlToEnd(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText, levelText);
 						savedEnemyHtmlTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText;		
 					}
 					else
 					{
 						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
 						levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;									
-						levelText = levelText + " (" + outData.outObj.EnemyLevel.toString() + ")";
+						levelText = levelText + " (" + savedEnemyLevelNumber.toString() + ")";
 						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
 						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text = levelText;
-						savedEnemyTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;	
 					}
 					
 					// Caclulate the new position for the brackets
@@ -356,11 +423,18 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 					fillPercent = Math.min(100, Math.max(fillPercent, 0));
 					var iMeterFrame: Number = Math.floor(fillPercent);
 					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);						
-				}				
+				}
 			}
+            savedEnemyTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;
+			savedEnemyLevelValue = " (" + savedEnemyLevelNumber.toString() + ")";
+		}
+		else
+		{
+			savedEnemyTextInfo = "";
+			savedEnemyLevelValue = "";	
 		}
 	}
-
+	
 	function ProcessValueToWeight(isValidTarget:Boolean):Void
 	{		
 		if (showValueToWeight && isValidTarget)
