@@ -287,13 +287,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			savedEnemyTextInfo = "";
 			savedEnemyLevelValue = "";	
 		}
-		
-		/*if (levelUpdateTimer)
-		{
-			clearInterval(levelUpdateTimer);
-		}
-		// Set an interval to disable hide the widgets.  This is for less intrusive hud 
-		levelUpdateTimer = setInterval(this,"updateLevelTimer",2000);		*/			
 	}
 	
 	function UpdateEnemyLevelValues()
@@ -315,17 +308,15 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	function SetCompassAngle(aPlayerAngle: Number, aCompassAngle: Number, abShowCompass: Boolean)
 	{		
-		// This function is hooked and gets fired alot,  we need to limit the use as much as possible
+		// This function is hooked and gets fired every frame
 		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
 		{	
 			var levelText:String;	
 			var updateImmediately:Boolean = false;
-			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(savedEnemyTextInfo + "\r\n");
-			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text + "\r\n");
 			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
 			{				
 				var idx:Number = savedEnemyTextInfo.lastIndexOf(savedEnemyLevelValue);
-				
+				// Try to prevent this from running every frame
 				if (idx <= 0)
 				{
 					updateImmediately = true;
@@ -339,12 +330,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 						updateImmediately = true;
 					}
 				}
-			
-			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(stringWithoutLevelValue + "\r\n");
-			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text + "\r\n");			
-			
-			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("---" + "\r\n" + "---" + "\r\n");
-			
+				
 				if (updateImmediately)
 				{
 					UpdateEnemyLevelValues();
@@ -353,7 +339,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 					{
 						clearInterval(levelUpdateTimer);
 					}
-					// Set an interval to disable hide the widgets.  This is for less intrusive hud 
 					levelUpdateTimer = setInterval(this,"updateLevelTimer",2000);						
 				}
 						
