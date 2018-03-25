@@ -52,7 +52,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
-	private var levelUpdateTimer:Number;
 
 	// Rects
 	private var maxXY:Object;
@@ -271,23 +270,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ProcessWeightClass(validTarget);
 		ProcessReadBook(validTarget);
 	}
-
-	function updateLevelTimer()
-	{
-		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
-		{
-			UpdateEnemyLevelValues();
-		}
-		else
-		{
-			if (levelUpdateTimer)
-			{
-				clearInterval(levelUpdateTimer);
-			}	
-			savedEnemyTextInfo = "";
-			savedEnemyLevelValue = "";	
-		}
-	}
 	
 	function UpdateEnemyLevelValues()
 	{
@@ -298,7 +280,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			savedEnemyLevelNumber = outData.outObj.EnemyLevel;
 			savedPlayerLevelNumber = outData.outObj.PlayerLevel;	
 			
-			_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Update: " + savedEnemyLevelNumber.toString() + ", " + savedPlayerLevelNumber.toString());
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Update: " + savedEnemyLevelNumber.toString() + ", " + savedPlayerLevelNumber.toString());
 		}	
 	}
 
@@ -306,118 +288,138 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		return pBegin + Math.floor((pEnd - pBegin) * pStep / pMax);
 	}
 
+	function isEnemyLevelUpdateRequired():Boolean
+	{
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Checking if visible");
+		
+		// Check the enemy movie is even visible
+		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha == 0 || !showEnemyLevel){
+			return false;
+		}
+		
+
+		var enemyNameText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Checking if (x) is in '" + enemyNameText + "'");
+		var startIndex:Number = enemyNameText.lastIndexOf("(");
+		var lastIndex:Number = enemyNameText.lastIndexOf(")");	
+	
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("SI: " + startIndex.toString());
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("EI: " + lastIndex.toString());
+	
+		// Look for (x) in the text  (This would be a lot easier if AS2 supported RegExp -_-)
+		if (startIndex < 0 || lastIndex < 0 || (lastIndex < startIndex) || ((lastIndex - startIndex) < 2))	
+		{
+			return true;
+		}
+	
+		// Check for A number in the parentheses
+		var levelString:String = enemyNameText.substring(startIndex + 1, lastIndex);
+		
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("D: " + (lastIndex - startIndex).toString());
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Level String: '" + levelString + "'");
+		
+		if (levelString == "" || parseInt(levelString) == NaN){
+			return true;
+		}
+	
+		return false;
+	
+	}
+
 	function SetCompassAngle(aPlayerAngle: Number, aCompassAngle: Number, abShowCompass: Boolean)
-	{		
+	{			
 		// This function is hooked and gets fired every frame
-		if (_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha > 0 && showEnemyLevel)
-		{	
+		if (isEnemyLevelUpdateRequired())
+		{			
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("T");
 			var levelText:String;	
-			var updateImmediately:Boolean = false;
-			if (savedEnemyTextInfo != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
+			var outData:Object = {outObj:Object};
+			_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
+			if (outData && outData.outObj)
 			{				
-				var idx:Number = savedEnemyTextInfo.lastIndexOf(savedEnemyLevelValue);
-				// Try to prevent this from running every frame
-				if (idx <= 0)
+				savedEnemyLevelNumber = outData.outObj.EnemyLevel;
+				savedPlayerLevelNumber = outData.outObj.PlayerLevel;
+				
+				if (savedPlayerLevelNumber == 0 && savedEnemyLevelNumber == 0)
 				{
-					updateImmediately = true;
+					return;
+				}
+			}
+			else
+			{
+				return;
+			}
+											
+			if (showEnemyLevelMax > 0 && showEnemyLevelMin > 0 )
+			{	
+				// Get the delta of level from player
+				var deltaLevelFromPlayer = savedEnemyLevelNumber-savedPlayerLevelNumber;
+				var maxPercent:Number = showEnemyLevelMax;
+				var minPercent:Number = showEnemyLevelMin * -1.0;
+							
+				var R:Number;
+				var G:Number;
+				var B:Number;
+				var RGB:Number;
+				var fontColor:String;
+				if (deltaLevelFromPlayer < 0){
+					if (deltaLevelFromPlayer < minPercent)
+					{
+						deltaLevelFromPlayer = minPercent;
+					}
+					
+					// Start with the same green that is used throughout the menus
+					R = interpolate(0xFF,0x18,minPercent, deltaLevelFromPlayer);
+					G = interpolate(0xFF,0x95,minPercent, deltaLevelFromPlayer);
+					B = interpolate(0xFF,0x15,minPercent, deltaLevelFromPlayer);
+					RGB = (R * 65536) + (G * 256) + B;
+					fontColor = RGB.toString(16);
+				}
+				else if (deltaLevelFromPlayer > 0){
+					if (deltaLevelFromPlayer > maxPercent)
+					{
+						deltaLevelFromPlayer = maxPercent;
+					}
+					R = interpolate(0xFF,0xFF,maxPercent, deltaLevelFromPlayer);
+					G = interpolate(0xFF,0x00,maxPercent, deltaLevelFromPlayer);
+					B = interpolate(0xFF,0x00,maxPercent, deltaLevelFromPlayer);
+					RGB = (R * 65536) + (G * 256) + B;
+					fontColor = RGB.toString(16);						
 				}
 				else
 				{
-					var stringWithoutLevelValue:String = savedEnemyTextInfo.substr(0, idx);
-					// Just to see if the name changed, if it did then we are targetting a different enemy
-					if (stringWithoutLevelValue != _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text)
-					{
-						updateImmediately = true;
-					}
+					fontColor = "FFFFFF";
 				}
+			
+				_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;	
+				levelText = " (<font color=\'#" + fontColor + "\'>" + savedEnemyLevelNumber.toString() + "</font>)";
 				
-				if (updateImmediately)
-				{
-					UpdateEnemyLevelValues();
-					
-					if (levelUpdateTimer)
-					{
-						clearInterval(levelUpdateTimer);
-					}
-					levelUpdateTimer = setInterval(this,"updateLevelTimer",2000);						
-				}
-						
-				if (!(savedPlayerLevelNumber < 1 && savedEnemyLevelNumber < 1))
-				{						
-					if (showEnemyLevelMax > 0 && showEnemyLevelMin > 0 )
-					{	
-						// Get the delta of level from player
-						var deltaLevelFromPlayer = savedEnemyLevelNumber-savedPlayerLevelNumber;
-						var maxPercent:Number = showEnemyLevelMax;
-						var minPercent:Number = showEnemyLevelMin * -1.0;
-									
-						var R:Number;
-						var G:Number;
-						var B:Number;
-						var RGB:Number;
-						var fontColor:String;
-						if (deltaLevelFromPlayer < 0){
-							if (deltaLevelFromPlayer < minPercent)
-							{
-								deltaLevelFromPlayer = minPercent;
-							}
-							
-							// Start with the same green that is used throughout the menus
-							R = interpolate(0xFF,0x18,minPercent, deltaLevelFromPlayer);
-							G = interpolate(0xFF,0x95,minPercent, deltaLevelFromPlayer);
-							B = interpolate(0xFF,0x15,minPercent, deltaLevelFromPlayer);
-							RGB = (R * 65536) + (G * 256) + B;
-							fontColor = RGB.toString(16);
-						}
-						else if (deltaLevelFromPlayer > 0){
-							if (deltaLevelFromPlayer > maxPercent)
-							{
-								deltaLevelFromPlayer = maxPercent;
-							}
-							R = interpolate(0xFF,0xFF,maxPercent, deltaLevelFromPlayer);
-							G = interpolate(0xFF,0x00,maxPercent, deltaLevelFromPlayer);
-							B = interpolate(0xFF,0x00,maxPercent, deltaLevelFromPlayer);
-							RGB = (R * 65536) + (G * 256) + B;
-							fontColor = RGB.toString(16);						
-						}
-						else
-						{
-							fontColor = "FFFFFF";
-						}
-					
-						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = true;	
-						levelText = " (<font color=\'#" + fontColor + "\'>" + savedEnemyLevelNumber.toString() + "</font>)";
-						
-						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText = 
-							appendHtmlToEnd(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText, levelText);
-						savedEnemyHtmlTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText;		
-					}
-					else
-					{
-						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
-						levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;									
-						levelText = levelText + " (" + savedEnemyLevelNumber.toString() + ")";
-						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
-						_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text = levelText;
-					}
-					
-					// Caclulate the new position for the brackets
-					var textWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.getLineMetrics(0).width;
-					var fieldWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._width;
-					var fillPercent = (textWidth / fieldWidth) * 100;
-					fillPercent = Math.min(100, Math.max(fillPercent, 0));
-					var iMeterFrame: Number = Math.floor(fillPercent);
-					_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);						
-				}
+				// Append the level
+				_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText = 
+					appendHtmlToEnd(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.htmlText, levelText);
 			}
-            savedEnemyTextInfo = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;
-			savedEnemyLevelValue = " (" + savedEnemyLevelNumber.toString() + ")";
+			// No coloring, turn off html
+			else
+			{
+				_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
+				levelText = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text;									
+				levelText = levelText + " (" + savedEnemyLevelNumber.toString() + ")";
+				_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.html = false;
+				_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text = levelText;
+			}
+			
+			// Calculate the new position for the brackets
+			var textWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.getLineMetrics(0).width;
+			var fieldWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._width;
+			var fillPercent = (textWidth / fieldWidth) * 100;
+			fillPercent = Math.min(100, Math.max(fillPercent, 0));
+			var iMeterFrame: Number = Math.floor(fillPercent);
+			_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);						
 		}
-		else
+		/*else
 		{
-			savedEnemyTextInfo = "";
-			savedEnemyLevelValue = "";	
-		}
+			_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("F");
+		}*/
 	}
 	
 	function ProcessValueToWeight(isValidTarget:Boolean):Void
