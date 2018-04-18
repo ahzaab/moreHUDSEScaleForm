@@ -15,6 +15,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var content:MovieClip;
 	public var WVTranslated:TextField;
 	public var LevelTranslated:TextField;
+	public var txtMeasureInstance:TextField;
 	
 	// Public vars
 	public var ToggleState:Number;
@@ -52,7 +53,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
-
+	
 	// Rects
 	private var maxXY:Object;
 	private var minXY:Object;
@@ -72,7 +73,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		minXY = {x:Stage.visibleRect.x + Stage.visibleRect.width,y:Stage.visibleRect.y + Stage.visibleRect.height};
 		this._parent.globalToLocal(maxXY);
 		this._parent.globalToLocal(minXY);
-
+		txtMeasureInstance._alpha = 0;
+		
 		// Anchor this widget to the top left corner
 		this._y = maxXY.y;
 		this._x = maxXY.x;
@@ -326,6 +328,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	
 	}
 
+	function measureStringWidth(str:String):Number {
+		txtMeasureInstance._alpha = 0;
+    	txtMeasureInstance.text = str;
+    	return txtMeasureInstance.textWidth;
+	}
+
 	function SetCompassAngle(aPlayerAngle: Number, aCompassAngle: Number, abShowCompass: Boolean)
 	{			
 		// This function is hooked and gets fired every frame
@@ -352,6 +360,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 											
 			if (showEnemyLevelMax > 0 && showEnemyLevelMin > 0 )
 			{	
+				var oldTextWidth:Number = measureStringWidth(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text);
+
 				// Get the delta of level from player
 				var deltaLevelFromPlayer = savedEnemyLevelNumber-savedPlayerLevelNumber;
 				var maxPercent:Number = showEnemyLevelMax;
@@ -409,17 +419,17 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			}
 			
 			// Calculate the new position for the brackets
-			var textWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.getLineMetrics(0).width;
-			var fieldWidth:Number = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._width;
-			var fillPercent = (textWidth / fieldWidth) * 100;
-			fillPercent = Math.min(100, Math.max(fillPercent, 0));
-			var iMeterFrame: Number = Math.floor(fillPercent);
+			var newTextWidth:Number = measureStringWidth(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance.text);
+			
+			var widthPercentChange = (newTextWidth - oldTextWidth) / oldTextWidth;
+			var adjustedBracketWidth = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._currentframe + 
+					(_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._currentframe * widthPercentChange)
+			
+			adjustedBracketWidth = Math.min(100, Math.max(adjustedBracketWidth, 0));
+			var iMeterFrame: Number = Math.floor(adjustedBracketWidth);
+			
 			_root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.gotoAndStop(iMeterFrame);						
 		}
-		/*else
-		{
-			_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("F");
-		}*/
 	}
 	
 	function ProcessValueToWeight(isValidTarget:Boolean):Void
@@ -849,15 +859,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 					content.gotoAndStop("DEFAULT");
 					break;
 			}
+				
+			//content.ApparelEnchantedLabel.border = true;
+			content.ApparelEnchantedLabel.verticalAutoSize="center"	
+			content.ApparelEnchantedLabel.textAutoSize="shrink";		
+
 			content.ApparelEnchantedLabel.html=true;
-			content.ApparelEnchantedLabel.textAutoSize="shrink";
 			content.ApparelEnchantedLabel.htmlText=a_val.effectsDescription;
 
-
-			var num:Number = (content.ApparelEnchantedLabel.getLineMetrics(0).height*1.0);
-			num = num*(content.ApparelEnchantedLabel.numLines);
-			num = (content.ApparelEnchantedLabel._height*0.5)-(num*0.5);
-			content.ApparelEnchantedLabel._y = (num-(3.0));
 		} else if (viewSideInfo && a_val.effect1 != undefined && a_val.effect2 != undefined && a_val.effect3 != undefined && a_val.effect4 != undefined && a_val.effect1 != null && a_val.effect2 != null && a_val.effect3 != null && a_val.effect4 != null) {
 			switch (ingredientWidgetStyle) {
 				case 0 :
