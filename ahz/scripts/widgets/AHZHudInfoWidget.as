@@ -15,6 +15,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var content:MovieClip;
 	public var WVTranslated:TextField;
 	public var LevelTranslated:TextField;
+	public var WarmthTranslated:TextField;
 	public var txtMeasureInstance:TextField;
 	
 	// Public vars
@@ -42,7 +43,9 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var showEnemyLevelMax:Number;
 	private var showEnemyLevelMin:Number;
 	private var showknownEnchantment:Boolean;
-	
+	private var showTargetWarmth:Boolean;
+	var PLAYER_CARD_WIDTH:Number = 651.0;
+		
 	// private variables
 	private var savedRolloverInfoText:String;
 	private var savedEnemyTextInfo:String;
@@ -118,6 +121,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showEnemyLevelMax = 10;
 		showEnemyLevelMin = 10;
 		showknownEnchantment = true;
+		showTargetWarmth = true;
 	}
 
 	function ShowElements(aMode:String,abShow:Boolean):Void
@@ -267,6 +271,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		
 		// Always show regardless of activation mode
 		ProcessValueToWeight(validTarget);
+		ProcessTargetWarmth(validTarget);
 		ProcessKnownEnchantment(validTarget);
 		ProcessBookSkill(validTarget);
 		ProcessWeightClass(validTarget);
@@ -432,6 +437,27 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 	}
 	
+	function ProcessTargetWarmth(isValidTarget:Boolean):Void
+	{		
+		if (showTargetWarmth && isValidTarget)
+		{
+			// Shor Warmth
+			if (_root.HUDMovieBaseInstance.RolloverInfoText._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoText.htmlText != "")
+			{
+				var targetWarmthRating:Number = _global.skse.plugins.AHZmoreHUDPlugin.GetTargetWarmthRating();
+				if (targetWarmthRating > 0)
+				{			
+					var warmthStr:String;
+	            	warmthStr = "<FONT FACE=\"$EverywhereMediumFont\"SIZE=\"15\"COLOR=\"#999999\"KERNING=\"0\">     " + WarmthTranslated.text + " <\\FONT>"		
+							+ "<FONT FACE=\"$EverywhereBoldFont\"SIZE=\"24\"COLOR=\"#FFFFFF\"KERNING=\"0\">" + targetWarmthRating.toString() + "<\\FONT>";
+		
+					_root.HUDMovieBaseInstance.RolloverInfoText.htmlText = 
+						appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoText.htmlText, warmthStr); 
+				}
+			}
+		}
+	}	
+	
 	function ProcessValueToWeight(isValidTarget:Boolean):Void
 	{		
 		if (showValueToWeight && isValidTarget)
@@ -582,7 +608,17 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				if (targetData.targetObj != undefined && targetData.targetObj != null && playerData.playerObj != undefined && playerData.playerObj != null)
 				{
 					// SHow the bottom widget data.  TODO: pass the object directly
-					showBottomWidget(targetData.targetObj.ratingOrDamage,targetData.targetObj.difference,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,targetData.targetObj.objWeight,targetData.targetObj.formType);
+					showBottomWidget(
+									 targetData.targetObj.ratingOrDamage,
+									 targetData.targetObj.difference,
+									 playerData.playerObj.encumbranceNumber,
+									 playerData.playerObj.maxEncumbranceNumber,
+									 playerData.playerObj.goldNumber,
+									 targetData.targetObj.objWeight,
+									 targetData.targetObj.formType,
+									 targetData.targetObj.totalWarmthRating,
+									 targetData.targetObj.warmthDifference,
+									 targetData.targetObj.isSurvivalMode);
 				}
 				else
 				{
@@ -595,7 +631,17 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
 				if (playerData.playerObj != undefined && playerData.playerObj != null)
 				{
-					showBottomWidget(0,0,playerData.playerObj.encumbranceNumber,playerData.playerObj.maxEncumbranceNumber,playerData.playerObj.goldNumber,0.0,AHZInventoryDefines.kNone);
+					showBottomWidget(
+									 0,
+									 0,
+									 playerData.playerObj.encumbranceNumber,
+									 playerData.playerObj.maxEncumbranceNumber,
+									 playerData.playerObj.goldNumber,
+									 0.0,
+									 AHZInventoryDefines.kNone,
+									 undefined,
+									 undefined,
+									 undefined);
 				}
 				else
 				{
@@ -627,7 +673,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 		inverse = 1.0/(xPercent/100.0);
 
-		tempVar = (Stage.visibleRect.width/inverse)-(451.0/inverse);
+		tempVar = (Stage.visibleRect.width/inverse)-(PLAYER_CARD_WIDTH/inverse);
 		AHZBottomBar_mc._x = tempVar;
 
 		inverse = 1.0/(yPercent/100.0);
@@ -732,8 +778,17 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	}
 
 	// @Papyrus
-	public function showBottomWidget(ratingOrDamage:Number,difference:Number,encumbranceNumber:Number,maxEncumbranceNumber:Number,goldNumber:Number,weightValue:Number,formType:Number):Void
-	{
+	public function showBottomWidget(
+						ratingOrDamage:Number,
+						difference:Number,
+						encumbranceNumber:Number,
+						maxEncumbranceNumber:Number,
+						goldNumber:Number,weightValue:Number,
+						formType:Number,
+						warmthRating:Number,
+						warmthDifference:Number,
+						isSurvivalMode:Boolean):Void
+	{		
 		if (viewBottomInfo)
 		{
 			var tempType:Number;
@@ -756,7 +811,29 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				weightValue = 0;
 			}
 			
-			AHZBottomBar_mc.UpdatePlayerInfo({damage:ratingOrDamage,armor:ratingOrDamage,gold:goldNumber,encumbrance:encumbranceNumber,maxEncumbrance:maxEncumbranceNumber},{type:tempType,damageChange:difference,armorChange:difference,objWeight:weightValue},bottomAligned);
+			if (!isSurvivalMode)
+			{
+				warmthRating = undefined;
+				warmthDifference = undefined;
+			}
+			
+			AHZBottomBar_mc.UpdatePlayerInfo(
+					{
+						damage:ratingOrDamage,
+					 	armor:ratingOrDamage,
+					 	gold:goldNumber,
+					 	encumbrance:encumbranceNumber,
+					 	maxEncumbrance:maxEncumbranceNumber
+					},
+					{
+						type:tempType,
+					   	damageChange:difference,
+					   	armorChange:difference,
+					   	objWeight:weightValue,
+					   	warmthChange:warmthDifference,
+					   	warmth:warmthRating
+					},
+					bottomAligned);
 
 
 			AHZBottomBar_mc._alpha = 100;
