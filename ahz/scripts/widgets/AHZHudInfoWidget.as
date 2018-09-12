@@ -17,6 +17,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var LevelTranslated:TextField;
 	public var WarmthTranslated:TextField;
 	public var txtMeasureInstance:TextField;
+	public var BottomRolloverText:TextField;
+	public var TopRolloverText:TextField;
 	
 	// Public vars
 	public var ToggleState:Number;
@@ -88,6 +90,26 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		hideBottomWidget();
 		hideInventoryWidget();
 
+		if (_root.HUDMovieBaseInstance.RolloverInfoInstance)
+		{
+			BottomRolloverText = _root.HUDMovieBaseInstance.RolloverInfoInstance;
+		}
+		else
+		{
+			// SkyHUD
+			BottomRolloverText = _root.HUDMovieBaseInstance.RolloverInfo_mc.RolloverInfoInstance
+		}
+		
+		if (_root.HUDMovieBaseInstance.RolloverNameInstance)
+		{
+			TopRolloverText = _root.HUDMovieBaseInstance.RolloverNameInstance;
+		}
+		else
+		{
+			// SkyHUD
+			TopRolloverText = _root.HUDMovieBaseInstance.RolloverName_mc.RolloverNameInstance
+		}
+		
 		if (! hooksInstalled)
 		{
 			// Apply hooks to hook events
@@ -164,7 +186,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public function checkForClearedHud():Void
 	{
 		clearInterval(alphaTimer);
-		if (_root.HUDMovieBaseInstance.RolloverNameInstance._alpha < 50)
+		if (TopRolloverText._alpha < 50)
 		{
 			hideSideWidget();	
 			hideInventoryWidget();
@@ -183,7 +205,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			var outData:Object = {outObj:Object};
 			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
-			var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverNameInstance._alpha > 0);	
+			var hudIsVisible:Boolean = (TopRolloverText._alpha > 0);	
 			ProcessPlayerWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 			ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 		}
@@ -194,7 +216,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ToggleState = 1;
 		var outData:Object = {outObj:Object};
 		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
-		var hudIsVisible:Boolean = (_root.HUDMovieBaseInstance.RolloverNameInstance._alpha > 0);
+		var hudIsVisible:Boolean = (TopRolloverText._alpha > 0);
 		ProcessPlayerWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 		ProcessTargetAndInventoryWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 	}
@@ -442,7 +464,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (showTargetWarmth && isValidTarget)
 		{
 			// Shor Warmth
-			if (_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText != "")
+			if (BottomRolloverText._alpha > 0 && BottomRolloverText.htmlText != "")
 			{
 				var targetWarmthRating:Number = _global.skse.plugins.AHZmoreHUDPlugin.GetTargetWarmthRating();
 				if (targetWarmthRating > 0)
@@ -451,8 +473,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	            	warmthStr = "<FONT FACE=\"$EverywhereMediumFont\"SIZE=\"15\"COLOR=\"#999999\"KERNING=\"0\">     " + WarmthTranslated.text + " <\\FONT>"		
 							+ "<FONT FACE=\"$EverywhereBoldFont\"SIZE=\"24\"COLOR=\"#FFFFFF\"KERNING=\"0\">" + targetWarmthRating.toString() + "<\\FONT>";
 		
-					_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText = 
-						appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText, warmthStr); 
+					BottomRolloverText.htmlText = 
+						appendHtmlToEnd(BottomRolloverText.htmlText, warmthStr); 
 				}
 			}
 		}
@@ -463,13 +485,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (showValueToWeight && isValidTarget)
 		{
 			// Show weight class if its armor
-			if (_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText != "")
+			if (BottomRolloverText._alpha > 0 && BottomRolloverText.htmlText != "")
 			{
-				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText, WVTranslated.text);
+				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(BottomRolloverText.htmlText, WVTranslated.text);
 				if (valueToWeight != "")
 				{					
-					_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText = 
-						appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText, valueToWeight); 
+					BottomRolloverText.htmlText = 
+						appendHtmlToEnd(BottomRolloverText.htmlText, valueToWeight); 
 				}
 			}
 		}
@@ -481,10 +503,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			var knownEnchantment:Boolean=_global.skse.plugins.AHZmoreHUDPlugin.IsAKnownEnchantedItem();
 
-			if (knownEnchantment && _root.HUDMovieBaseInstance.RolloverNameInstance._alpha > 0 && _root.HUDMovieBaseInstance.RolloverNameInstance.htmlText!="")
+			if (knownEnchantment && TopRolloverText._alpha > 0 && TopRolloverText.htmlText!="")
 			{
-				_root.HUDMovieBaseInstance.RolloverNameInstance.html=true;
-				appendImageToEnd(_root.HUDMovieBaseInstance.RolloverNameInstance, "ahzknown.png", 17, 17);
+				TopRolloverText.html=true;
+				appendImageToEnd(TopRolloverText, "ahzknown.png", 17, 17);
 			}
 		}
 	}
@@ -494,14 +516,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (showWeightClass && isValidTarget)
 		{
 			// Show weight class if its armor
-			if (_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText != "")
+			if (BottomRolloverText._alpha > 0 && BottomRolloverText.htmlText != "")
 			{
 				var weightClass:String = _global.skse.plugins.AHZmoreHUDPlugin.GetArmorWeightClassString();
 				if (weightClass != "")
 				{
 					// Insert the weight class into the rolloverinfo textfield
-					_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText = 
-						appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText, weightClass.toUpperCase());
+					BottomRolloverText.htmlText = 
+						appendHtmlToEnd(BottomRolloverText.htmlText, weightClass.toUpperCase());
 				}
 			}
 		}
@@ -512,14 +534,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (showBookSkill && isValidTarget)
 		{			
 			// Show book skill
-			if (_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha > 0 && _root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText != "")
+			if (BottomRolloverText._alpha > 0 && BottomRolloverText.htmlText != "")
 			{
 				var bookSkill:String = _global.skse.plugins.AHZmoreHUDPlugin.GetBookSkillString();
 				if (bookSkill != "")
 				{
 					// Insert the book skill into the rolloverinfo textfield
-					_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText = 
-						appendHtmlToEnd(_root.HUDMovieBaseInstance.RolloverInfoInstance.htmlText, bookSkill.toUpperCase());					
+					BottomRolloverText.htmlText = 
+						appendHtmlToEnd(BottomRolloverText.htmlText, bookSkill.toUpperCase());					
 				}
 				else
 				{
@@ -1052,10 +1074,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			var bookRead:Boolean=_global.skse.plugins.AHZmoreHUDPlugin.GetIsBookAndWasRead();
 
-			if (bookRead&&_root.HUDMovieBaseInstance.RolloverNameInstance._alpha>0&&_root.HUDMovieBaseInstance.RolloverNameInstance.htmlText!="")
+			if (bookRead && TopRolloverText._alpha>0 && TopRolloverText.htmlText!="")
 			{
-				_root.HUDMovieBaseInstance.RolloverNameInstance.html=true;
-				appendImageToEnd(_root.HUDMovieBaseInstance.RolloverNameInstance, "eyeImage.png", 17, 17);				
+				TopRolloverText.html=true;
+				appendImageToEnd(TopRolloverText, "eyeImage.png", 17, 17);				
 			}
 		}
 	}
