@@ -138,12 +138,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ToggleState = 0;
 		savedRolloverInfoText = "";
 		showTargetWeight = false;
-		showValueToWeight = true;
-		showEnemyLevel = true;
+		showValueToWeight = false;
+		showEnemyLevel = false;
 		showEnemyLevelMax = 10;
 		showEnemyLevelMin = 10;
-		showknownEnchantment = true;
-		showTargetWarmth = true;
+		showknownEnchantment = false;
+		showTargetWarmth = false;
 	}
 
 	function ShowElements(aMode:String,abShow:Boolean):Void
@@ -487,7 +487,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			// Show weight class if its armor
 			if (BottomRolloverText._alpha > 0 && BottomRolloverText.htmlText != "")
 			{
-				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(BottomRolloverText.htmlText, WVTranslated.text);
+				var valueToWeight:String = _global.skse.plugins.AHZmoreHUDPlugin.GetValueToWeightString(BottomRolloverText.text, WVTranslated.text);
 				if (valueToWeight != "")
 				{					
 					BottomRolloverText.htmlText = 
