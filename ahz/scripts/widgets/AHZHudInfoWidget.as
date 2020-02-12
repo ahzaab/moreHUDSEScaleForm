@@ -5,11 +5,11 @@ import skyui.util.Debug;
 import flash.geom.Transform;
 import flash.geom.ColorTransform;
 import flash.geom.Matrix;
-
+import flash.filters.DropShadowFilter;
 
 class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 {
-	//Widgets
+	//Widgets 
 	public var AHZBottomBar_mc:MovieClip;
 	public var Inventory_mc:MovieClip;
 	public var content:MovieClip;
@@ -19,6 +19,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var txtMeasureInstance:TextField;
 	public var BottomRolloverText:TextField;
 	public var TopRolloverText:TextField;
+	public var EnemySoul:TextField;
 	
 	// Public vars
 	public var ToggleState:Number;
@@ -45,10 +46,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var showEnemyLevelMax:Number;
 	private var showEnemyLevelMin:Number;
 	private var showknownEnchantment:Boolean;
-	private var showTargetWarmth:Boolean;
 	private var widgetDisplayDelayMS:Number;
 	private var savedCrossHairData:Object;
 	private var displayActive:Boolean;
+	private var showEnemySoulLevel:Boolean;
+	private var showTargetWarmth:Boolean;
 	var PLAYER_CARD_WIDTH:Number = 651.0;
 		
 	// private variables
@@ -93,6 +95,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		hideSideWidget();
 		hideBottomWidget();
 		hideInventoryWidget();
+
+		InitEnemySoulTextField();
+
+		//EnemySoul.border = true;
 
 		if (_root.HUDMovieBaseInstance.RolloverInfoInstance)
 		{
@@ -150,6 +156,24 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showTargetWarmth = true;   // Always show. This matches the Games logic if survival mode is enabled
 		widgetDisplayDelayMS = 0;
 		displayActive = false;
+		showEnemySoulLevel = false;
+	}
+
+	function InitEnemySoulTextField():Void{
+		var enemy_mc = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance;
+		EnemySoul = enemy_mc.createTextField("EnemySoul", 
+							enemy_mc.getNextHighestDepth(), 
+							 enemy_mc.RolloverNameInstance._x, 
+							 enemy_mc.RolloverNameInstance._height - 22, 
+							 enemy_mc.RolloverNameInstance._width, 
+							 enemy_mc.RolloverNameInstance._height);
+		EnemySoul.setNewTextFormat(enemy_mc.RolloverNameInstance.getTextFormat());
+		
+		var filter:DropShadowFilter = new DropShadowFilter(2,45,0,100,2,2,1.5);
+		var filterArray:Array = new Array();
+  		filterArray.push(filter);
+		EnemySoul.filters = filterArray;
+		EnemySoul._alpha = 0;	
 	}
 
 	function ShowElements(aMode:String,abShow:Boolean):Void
@@ -399,13 +423,39 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	function SetCompassAngle(aPlayerAngle: Number, aCompassAngle: Number, abShowCompass: Boolean)
 	{			
+		var outData:Object = {outObj:Object};
+	
+		if (showEnemySoulLevel && _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha)
+		{
+			_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);
+			if (outData && outData.outObj && outData.outObj.Soul){
+				EnemySoul._alpha = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._alpha;
+				EnemySoul.text = outData.outObj.Soul;
+			}
+			else
+			{
+				EnemySoul._alpha = 0;
+			}
+		}
+		else
+		{
+			EnemySoul._alpha = 0;
+			// stting to null will flag the code further down to read the data again for the level
+			outData = null;
+		}
+	
 		// This function is hooked and gets fired every frame
-		if (isEnemyLevelUpdateRequired())
+		if (isEnemyLevelUpdateRequired(outData))
 		{			
 			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("T");
-			var levelText:String;	
-			var outData:Object = {outObj:Object};
-			_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
+			var levelText:String;
+			// If the data was not aquired from reading the soul level then read it here
+			if (!outData)
+			{
+				outData = {outObj:Object};
+				_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
+			}
+			
 			if (outData && outData.outObj)
 			{				
 				savedEnemyLevelNumber = outData.outObj.EnemyLevel;
@@ -537,12 +587,21 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	{
 		if (showknownEnchantment && isValidTarget)
 		{
-			var knownEnchantment:Boolean=_global.skse.plugins.AHZmoreHUDPlugin.IsAKnownEnchantedItem();
+			var knownEnchantment:Number=_global.skse.plugins.AHZmoreHUDPlugin.IsAKnownEnchantedItem();
 
 			if (knownEnchantment && TopRolloverText._alpha > 0 && TopRolloverText.htmlText!="")
 			{
 				TopRolloverText.html=true;
-				appendImageToEnd(TopRolloverText, "ahzknown.png", 17, 17);
+				
+				// Player knows the enchantment
+				if (knownEnchantment == 1){
+					appendImageToEnd(TopRolloverText, "ahzknown.png", 17, 17);
+				}
+				
+				// The item is enchanted, but the player cannot learn the enchantment
+				if (knownEnchantment == 2){
+					appendImageToEnd(TopRolloverText, "ahzEnch.png", 17, 17);
+				}	
 			}
 		}
 	}
@@ -812,7 +871,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 								   showEnemyLevelMaxValue:Number,
 								   showEnemyLevelMinValue:Number,
 								   showknownEnchantmentValue:Number,
-								   widgetDisplayDelayMSValue:Number):Void 
+								   widgetDisplayDelayMSValue:Number,
+								   showEnemySoulLevelValue:Number):Void 
 	{				
 		viewSideInfo = (sideView>=1);
 		viewBottomInfo = (bottomView>=1);
@@ -834,6 +894,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showEnemyLevelMin = showEnemyLevelMinValue;
 		showknownEnchantment = (showknownEnchantmentValue>=1);
 		widgetDisplayDelayMS = widgetDisplayDelayMSValue;
+		showEnemySoulLevel = (showEnemySoulLevelValue>=1);
 		RefreshWidgets();
 	}
 
