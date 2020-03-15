@@ -5,11 +5,11 @@ import skyui.util.Debug;
 import flash.geom.Transform;
 import flash.geom.ColorTransform;
 import flash.geom.Matrix;
-
+import flash.filters.DropShadowFilter;
 
 class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 {
-	//Widgets
+	//Widgets 
 	public var AHZBottomBar_mc:MovieClip;
 	public var Inventory_mc:MovieClip;
 	public var content:MovieClip;
@@ -19,6 +19,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var txtMeasureInstance:TextField;
 	public var BottomRolloverText:TextField;
 	public var TopRolloverText:TextField;
+	public var EnemySoul:TextField;
 	
 	// Public vars
 	public var ToggleState:Number;
@@ -28,6 +29,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var viewSideInfo:Boolean;
 	private var viewEffectsInfo:Boolean;
 	private var viewBottomInfo:Boolean;
+	private var viewBottomInfoAlways:Boolean;
 	private var viewInventoryCount:Boolean;
 	private var bottomAligned:Number;
 	private var inventoryAligned:Number;
@@ -45,6 +47,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var showEnemyLevelMax:Number;
 	private var showEnemyLevelMin:Number;
 	private var showknownEnchantment:Boolean;
+	private var widgetDisplayDelayMS:Number;
+	private var savedCrossHairData:Object;
+	private var displayActive:Boolean;
+	private var showEnemySoulLevel:Boolean;
 	private var showTargetWarmth:Boolean;
 	var PLAYER_CARD_WIDTH:Number = 651.0;
 		
@@ -58,6 +64,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	private var _mcLoader:MovieClipLoader;
 	private var alphaTimer:Number;
+	private var widgetDelayTimer:Number;
 	
 	// Rects
 	private var maxXY:Object;
@@ -72,7 +79,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public function AHZHudInfoWidget()
 	{
 		super();
-
+		savedCrossHairData = {outObj:Object,validTarget:Boolean};
 		// Get the rec of the parent
 		maxXY = {x:Stage.visibleRect.x,y:Stage.visibleRect.y};
 		minXY = {x:Stage.visibleRect.x + Stage.visibleRect.width,y:Stage.visibleRect.y + Stage.visibleRect.height};
@@ -89,6 +96,10 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		hideSideWidget();
 		hideBottomWidget();
 		hideInventoryWidget();
+
+		InitEnemySoulTextField();
+
+		//EnemySoul.border = true;
 
 		if (_root.HUDMovieBaseInstance.RolloverInfoInstance)
 		{
@@ -124,6 +135,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		viewSideInfo = false;
 		viewEffectsInfo = false;
 		viewBottomInfo = false;
+		viewBottomInfoAlways = false;
 		viewInventoryCount = false;
 		bottomAligned = 1;
 		inventoryAligned = 0;
@@ -143,7 +155,27 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showEnemyLevelMax = 10;
 		showEnemyLevelMin = 10;
 		showknownEnchantment = false;
-		showTargetWarmth = false;
+		showTargetWarmth = true;   // Always show. This matches the Games logic if survival mode is enabled
+		widgetDisplayDelayMS = 0;
+		displayActive = false;
+		showEnemySoulLevel = false;
+	}
+
+	function InitEnemySoulTextField():Void{
+		var enemy_mc = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance;
+		EnemySoul = enemy_mc.createTextField("EnemySoul", 
+							enemy_mc.getNextHighestDepth(), 
+							 enemy_mc.RolloverNameInstance._x, 
+							 enemy_mc.RolloverNameInstance._height - 22, 
+							 enemy_mc.RolloverNameInstance._width, 
+							 enemy_mc.RolloverNameInstance._height);
+		EnemySoul.setNewTextFormat(enemy_mc.RolloverNameInstance.getTextFormat());
+		
+		var filter:DropShadowFilter = new DropShadowFilter(2,45,0,100,2,2,1.5);
+		var filterArray:Array = new Array();
+  		filterArray.push(filter);
+		EnemySoul.filters = filterArray;
+		EnemySoul._alpha = 0;	
 	}
 
 	function ShowElements(aMode:String,abShow:Boolean):Void
@@ -208,6 +240,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			var hudIsVisible:Boolean = (TopRolloverText._alpha > 0);	
 			ProcessPlayerWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 			ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
+		}	
+		else if (viewBottomInfo && viewBottomInfoAlways){
+			var outData:Object = {outObj:Object};
+			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
+			ProcessPlayerWidget(validTarget, (outData && outData.outObj && outData.outObj.canCarry));
 		}
 	}
 
@@ -256,23 +293,34 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	// Hooks the main huds function
 	function SetCrosshairTarget(abActivate:Boolean,aName:String,abShowButton:Boolean,abTextOnly:Boolean,abFavorMode:Boolean,abShowCrosshair:Boolean,aWeight:Number,aCost:Number,aFieldValue:Number,aFieldText):Void
-	{		
-		
+	{			
 		var validTarget:Boolean = false;
 		var activateWidgets:Boolean = false;
 		var outData:Object = {outObj:Object};
-		var forceDisplayOfPlayerData:Boolean = false;
+		
+		// Always reset the delay timer to reset when the cross hair changes
+		if (widgetDelayTimer)
+		{
+			clearInterval(widgetDelayTimer);
+		}			
 		
 		//showEquippedWidget(1);
 		if (abActivate)
 		{
 			validTarget = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
+			savedCrossHairData.outObj = outData.outObj;
+			savedCrossHairData.validTarget = validTarget;
+			
 			if (alphaTimer != null)
 			{
 				clearInterval(alphaTimer);
 			}
 			// Set an interval to disable hide the widgets.  This is for less intrusive hud 
 			alphaTimer = setInterval(this,"checkForClearedHud",6000);	
+		}
+		else
+		{
+			displayActive = false;
 		}
 		
 		if ((abActivate && activationMode == 0) ||
@@ -282,14 +330,19 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			activateWidgets = true;
 		}
 
-		if (abActivate && activationMode == 2 && ToggleState == 1)
-		{
-			forceDisplayOfPlayerData = true;
+		// Only use visibulity delay when not toggling
+		if (activateWidgets && activationMode != 2 && widgetDisplayDelayMS>0 && !displayActive)
+		{	
+			// Set an interval to disable hide the widgets.  This is for less intrusive hud 
+			widgetDelayTimer = setInterval(this,"delayedDisplay",widgetDisplayDelayMS);					
 		}
-
-		// Process the bottom player widget
-		ProcessPlayerWidget(validTarget && activateWidgets, (outData && outData.outObj && outData.outObj.canCarry));
-		ProcessTargetAndInventoryWidget(validTarget && activateWidgets);
+		else
+		{
+			// Process the bottom player widget
+			ProcessPlayerWidget(validTarget && activateWidgets, (outData && outData.outObj && outData.outObj.canCarry));	
+			// Process the side widget and inventory
+			ProcessTargetAndInventoryWidget(validTarget && activateWidgets);
+		}
 		
 		// Always show regardless of activation mode
 		ProcessValueToWeight(validTarget);
@@ -298,6 +351,20 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ProcessBookSkill(validTarget);
 		ProcessWeightClass(validTarget);
 		ProcessReadBook(validTarget);
+	}
+	
+	function delayedDisplay():Void
+	{
+		clearInterval(widgetDelayTimer);
+		if (savedCrossHairData)
+		{
+			// Process the bottom player widget
+			ProcessPlayerWidget(savedCrossHairData.validTarget, (savedCrossHairData.outObj && savedCrossHairData.outObj.canCarry));	
+			// Process the side widget and inventory
+			ProcessTargetAndInventoryWidget(savedCrossHairData.validTarget);
+			
+			displayActive = savedCrossHairData.validTarget;
+		}	
 	}
 	
 	function UpdateEnemyLevelValues()
@@ -363,13 +430,39 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	function SetCompassAngle(aPlayerAngle: Number, aCompassAngle: Number, abShowCompass: Boolean)
 	{			
+		var outData:Object = {outObj:Object};
+	
+		if (showEnemySoulLevel && _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance._alpha)
+		{
+			_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);
+			if (outData && outData.outObj && outData.outObj.Soul){
+				EnemySoul._alpha = _root.HUDMovieBaseInstance.EnemyHealth_mc.BracketsInstance.RolloverNameInstance._alpha;
+				EnemySoul.text = outData.outObj.Soul;
+			}
+			else
+			{
+				EnemySoul._alpha = 0;
+			}
+		}
+		else
+		{
+			EnemySoul._alpha = 0;
+			// stting to null will flag the code further down to read the data again for the level
+			outData = null;
+		}
+	
 		// This function is hooked and gets fired every frame
-		if (isEnemyLevelUpdateRequired())
+		if (isEnemyLevelUpdateRequired(outData))
 		{			
 			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("T");
-			var levelText:String;	
-			var outData:Object = {outObj:Object};
-			_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
+			var levelText:String;
+			// If the data was not aquired from reading the soul level then read it here
+			if (!outData)
+			{
+				outData = {outObj:Object};
+				_global.skse.plugins.AHZmoreHUDPlugin.GetEnemyInformation(outData, LevelTranslated.htmlText);			
+			}
+			
 			if (outData && outData.outObj)
 			{				
 				savedEnemyLevelNumber = outData.outObj.EnemyLevel;
@@ -501,12 +594,21 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	{
 		if (showknownEnchantment && isValidTarget)
 		{
-			var knownEnchantment:Boolean=_global.skse.plugins.AHZmoreHUDPlugin.IsAKnownEnchantedItem();
+			var knownEnchantment:Number=_global.skse.plugins.AHZmoreHUDPlugin.IsAKnownEnchantedItem();
 
 			if (knownEnchantment && TopRolloverText._alpha > 0 && TopRolloverText.htmlText!="")
 			{
 				TopRolloverText.html=true;
-				appendImageToEnd(TopRolloverText, "ahzknown.png", 17, 17);
+				
+				// Player knows the enchantment
+				if (knownEnchantment == 1){
+					appendImageToEnd(TopRolloverText, "ahzknown.png", 17, 17);
+				}
+				
+				// The item is enchanted, but the player cannot learn the enchantment
+				if (knownEnchantment == 2){
+					appendImageToEnd(TopRolloverText, "ahzEnch.png", 17, 17);
+				}	
 			}
 		}
 	}
@@ -647,7 +749,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 					hideBottomWidget();
 				}
 			}
-			else if (ToggleState > 0)
+			else if (ToggleState > 0 || viewBottomInfoAlways)
 			{
 				// Only show player data
 				_global.skse.plugins.AHZmoreHUDPlugin.GetPlayerData(playerData);
@@ -775,8 +877,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 								   showEnemyLevelValue:Number,
 								   showEnemyLevelMaxValue:Number,
 								   showEnemyLevelMinValue:Number,
-								   showknownEnchantmentValue:Number):Void {
-				
+								   showknownEnchantmentValue:Number,
+								   widgetDisplayDelayMSValue:Number,
+								   showEnemySoulLevelValue:Number,
+								   viewBottomInfoAlwaysValue:Number):Void 
+	{				
 		viewSideInfo = (sideView>=1);
 		viewBottomInfo = (bottomView>=1);
 		viewInventoryCount = (inventoryCount>=1);
@@ -796,6 +901,9 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		showEnemyLevelMax = showEnemyLevelMaxValue;
 		showEnemyLevelMin = showEnemyLevelMinValue;
 		showknownEnchantment = (showknownEnchantmentValue>=1);
+		widgetDisplayDelayMS = widgetDisplayDelayMSValue;
+		showEnemySoulLevel = (showEnemySoulLevelValue>=1);
+		viewBottomInfoAlways = (viewBottomInfoAlwaysValue>=1);
 		RefreshWidgets();
 	}
 
@@ -814,7 +922,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (viewBottomInfo)
 		{
 			var tempType:Number;
-			if (formType == AHZInventoryDefines.kWeapon || formType == AHZInventoryDefines.kAmmo)
+			if (formType == AHZInventoryDefines.kWeapon || formType == AHZInventoryDefines.kAmmo || formType == AHZInventoryDefines.kProjectile)
 			{
 				tempType = AHZInventoryDefines.ICT_WEAPON;
 			}
@@ -869,7 +977,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	// @Papyrus
 	public function hideBottomWidget():Void
 	{
-		AHZBottomBar_mc._alpha = 0;
+		if (!viewBottomInfoAlways){
+			AHZBottomBar_mc._alpha = 0;
+		}
+		else
+		{
+			
+		}
 	}
 
 	// @Papyrus
@@ -985,81 +1099,27 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 					break;
 			}
 
-			content.Ingredient1.html=true;
-			content.Ingredient2.html=true;
-			content.Ingredient3.html=true;
-			content.Ingredient4.html=true;
+			for (var i = 1; i <=4; i++) 
+			{
+				content["Ingredient" + i].html=true;
 
-			if (a_val.effect1 == undefined)
-			{
-				content.Ingredient1.htmlText="";
-				content.IngredientBullet1._alpha=0;
-			}
-			else if (a_val.effect1=="")
-			{
-				content.Ingredient1.htmlText="$UNKNOWN";
-				content.IngredientBullet1._alpha=25;
-				content.Ingredient1._alpha=25;
-			}
-			else
-			{
-				content.Ingredient1._alpha=100;
-				content.IngredientBullet1._alpha=100;
-				content.Ingredient1.htmlText=a_val.effect1;//.toUpperCase();
-			}
-			
-			if (a_val.effect2 == undefined)
-			{
-				content.Ingredient2.htmlText="";
-				content.IngredientBullet2._alpha=0;
-			}
-			else if (a_val.effect2=="")
-			{
-				content.Ingredient2.htmlText="$UNKNOWN";
-				content.IngredientBullet2._alpha=25;
-				content.Ingredient2._alpha=25;
-			}
-			else
-			{
-				content.Ingredient2._alpha=100;
-				content.IngredientBullet2._alpha=100;
-				content.Ingredient2.htmlText=a_val.effect2;//.toUpperCase();
-			}
-
-			if (a_val.effect3 == undefined)
-			{
-				content.Ingredient3.htmlText="";
-				content.IngredientBullet3._alpha=0;
-			}
-			else if (a_val.effect3=="")
-			{
-				content.Ingredient3.htmlText="$UNKNOWN";
-				content.IngredientBullet3._alpha=25;
-				content.Ingredient3._alpha=25;
-			}
-			else
-			{
-				content.Ingredient3._alpha=100;
-				content.IngredientBullet3._alpha=100;
-				content.Ingredient3.htmlText=a_val.effect3;//.toUpperCase();
-			}
-
-			if (a_val.effect4 == undefined)
-			{
-				content.Ingredient4.htmlText="";
-				content.IngredientBullet4._alpha=0;
-			}
-			else if (a_val.effect4=="")
-			{
-				content.Ingredient4.htmlText="$UNKNOWN";
-				content.IngredientBullet4._alpha=25;
-				content.Ingredient4._alpha=25;
-			}
-			else
-			{
-				content.Ingredient4._alpha=100;
-				content.IngredientBullet4._alpha=100;
-				content.Ingredient4.htmlText=a_val.effect4;//.toUpperCase();
+				if (a_val["effect" + i] == undefined)
+				{
+					content["Ingredient" + i].htmlText="";
+					content["IngredientBullet" + i]._alpha=0;
+				}
+				else if (a_val["effect" + i]=="")
+				{
+					content["Ingredient" + i].htmlText="$UNKNOWN";
+					content["IngredientBullet" + i]._alpha=25;
+					content["Ingredient" + i]._alpha=25;
+				}
+				else
+				{
+					content["Ingredient" + i]._alpha=100;
+					content["IngredientBullet" + i]._alpha=100;
+					content["Ingredient" + i].htmlText=a_val["effect"+i];
+				}
 			}
 		}
 		else
