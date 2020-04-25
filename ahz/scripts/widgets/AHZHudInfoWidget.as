@@ -26,8 +26,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	public var EnemyStamina_mc:MovieClip;
 	public var LoadedEnemyMagicka_mc:MovieClip;
 	public var LoadedEnemyStamina_mc:MovieClip;	
-	public var EnemyMagickaMcLoader: AHZLoadedMovieClip;
-	public var EnemyStaminaMcLoader: AHZLoadedMovieClip;
 	public var EnemyMagickaMeter: Meter;
 	public var EnemyStaminaMeter: Meter;	
 	public var HealthStats_mc: MovieClip;
@@ -282,8 +280,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			metersToLoad.push(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH])
 			LoadedEnemyStamina_mc = this.createEmptyMovieClip("LoadedEnemyStamina_mc", EnemyStamina_mc.getDepth());
 			mcLoader.loadClip(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH], LoadedEnemyStamina_mc);					
+			
+			// Make the built-in movieclip disapear, it is being replaced, pending any loading errors
 			EnemyStamina_mc._alpha = 0;
-			this.removeMovieClip(EnemyStamina_mc);
+			EnemyStamina_mc._xscale = 0;
+			EnemyStamina_mc._yscale = 0;
 		}
 		else
 		{
@@ -296,8 +297,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			metersToLoad.push(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH])
 			LoadedEnemyMagicka_mc = this.createEmptyMovieClip("LoadedEnemyMagicka_mc", EnemyMagicka_mc.getDepth());
 			mcLoader.loadClip(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH], LoadedEnemyMagicka_mc);		
+			
+			// Make the built-in movieclip disapear, it is being replaced, pending any loading errorss
 			EnemyMagicka_mc._alpha = 0;
-			this.removeMovieClip(EnemyMagicka_mc);
+			EnemyMagicka_mc._xscale = 0;
+			EnemyMagicka_mc._yscale = 0;
 		}
 		else
 		{
@@ -1642,20 +1646,18 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		return true;
 	}
 	
+	private function removePendingClip(s_mc:MovieClip):Void{
+		var index = metersToLoad.indexOf(s_mc);
+		if (index >= 0){
+			metersToLoad.splice(index, 1);
+		}	
+	}
+	
 	public function onLoadInit(s_mc: MovieClip): Void
 	{
 		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("onLoadInit: " + s_mc);
-		if (LoadedEnemyMagicka_mc == s_mc)
-		{
-			var index = metersToLoad.indexOf(LoadedEnemyMagicka_mc);
-			metersToLoad.splice(index, 1);
-		}
-		if (LoadedEnemyStamina_mc == s_mc)
-		{
-			var index = metersToLoad.indexOf(LoadedEnemyStamina_mc);
-			metersToLoad.splice(index, 1);
-		}	
-	
+
+		removePendingClip(s_mc);
 		if (!metersToLoad.length)
 		{
 			clipsReady();
@@ -1664,6 +1666,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	
 	public function onLoadError(s_mc:MovieClip, a_errorCode: String): Void
 	{
+		// Even on error, we need to pull it from the pending clips.  If the
+		// clip could not load it will revert back to the built-in clip
 		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Error Loading: " + s_mc + " Error: " + a_errorCode);
+		
+		removePendingClip(s_mc);
+		if (!metersToLoad.length)
+		{
+			clipsReady();
+		}		
 	}	
 }
