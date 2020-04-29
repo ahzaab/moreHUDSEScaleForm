@@ -217,6 +217,9 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YSCALE])
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YSCALE] = 1.0;						
 
+		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA])
+			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA] = 100;	
+
 		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET])
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET] = 0;			
 
@@ -228,6 +231,9 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YSCALE])
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YSCALE] = 1.0;	
+			
+		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA])
+			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] = 100;				
 			
 		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XOFFSET])
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XOFFSET] = 0;
@@ -241,6 +247,9 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YSCALE])
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YSCALE] = 1.0;						
 
+		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA])
+			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA] = 100;	
+
 		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XOFFSET])
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XOFFSET] = 0;			
 
@@ -253,6 +262,9 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YSCALE])
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YSCALE] = 1.0;	
 	
+		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA])
+			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] = 100;	
+	
 		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XOFFSET])
 			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XOFFSET] = 0;			
 
@@ -264,6 +276,9 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YSCALE])
 			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YSCALE] = 1.0;	
+			
+		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_ALPHA])
+			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_ALPHA] = 100;			
 			
 		if (!_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING])
 			_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING] = true;
@@ -428,7 +443,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			{
 				EnemyStaminaMeter.SetTargetPercent(staminaPct);
 			}
-			LoadedEnemyStamina_mc._alpha = 100;
+			LoadedEnemyStamina_mc._alpha = _config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA];
 		}
 		else if (staminaPct < 0)
 		{
@@ -441,7 +456,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			{
 				EnemyMagickaMeter.SetTargetPercent(magickaPct);
 			}
-			LoadedEnemyMagicka_mc._alpha = 100;			
+			LoadedEnemyMagicka_mc._alpha = _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA];			
 			EnemyStaminaMeter.SetPercent(0);
 			LoadedEnemyStamina_mc._alpha = 0;
 		}
@@ -459,8 +474,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				EnemyMagickaMeter.SetTargetPercent(magickaPct);
 				EnemyStaminaMeter.SetTargetPercent(staminaPct);
 			}
-			LoadedEnemyMagicka_mc._alpha = 100;	
-			LoadedEnemyStamina_mc._alpha = 100;
+			LoadedEnemyMagicka_mc._alpha = _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA];	
+			LoadedEnemyStamina_mc._alpha = _config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA];
 		}		
 		
 		if (!_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING])
@@ -508,8 +523,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			return;
 		}
 		
-		MagickaStats_mc._alpha = (showEnemyMagickaStats) ? LoadedEnemyMagicka_mc._alpha : 0;
-		StaminaStats_mc._alpha = (showEnemyStaminaStats) ? LoadedEnemyStamina_mc._alpha : 0;
+		MagickaStats_mc._alpha = (showEnemyMagickaStats) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
+		StaminaStats_mc._alpha = (showEnemyStaminaStats) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
 		MagickaStats_mc.Stats.text = enemy.magicka.toString() + "/" + enemy.maxMagicka.toString();
 		StaminaStats_mc.Stats.text = enemy.stamina.toString() + "/" + enemy.maxStamina.toString();		
 		
@@ -522,8 +537,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 		else
 		{
-			MagickaStats_mc._alpha = (showEnemyMagickaStats) ? LoadedEnemyMagicka_mc._alpha : 0;
-			StaminaStats_mc._alpha = (showEnemyStaminaStats) ? LoadedEnemyStamina_mc._alpha : 0;
+			MagickaStats_mc._alpha = (showEnemyMagickaStats) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
+			StaminaStats_mc._alpha = (showEnemyStaminaStats) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
 			MagickaStats_mc.Stats.text = enemy.magicka.toString() + "/" + enemy.maxMagicka.toString();
 			StaminaStats_mc.Stats.text = enemy.stamina.toString() + "/" + enemy.maxStamina.toString();
 			MagickaStats_mc._x = LoadedEnemyMagicka_mc._x + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET];
@@ -548,7 +563,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			}
 			else
 			{
-				HealthStats_mc._alpha = 100;
+				HealthStats_mc._alpha = _config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_ALPHA];
 			}
 		}
 		else

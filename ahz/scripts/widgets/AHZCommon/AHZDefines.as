@@ -6,25 +6,30 @@
 	static var CFG_ENEMY_MAGICKA_METER_XSCALE: String = 'fxscale:enemymagickameter';
 	static var CFG_ENEMY_MAGICKA_METER_YSCALE: String = 'fyscale:enemymagickameter';
 	static var CFG_ENEMY_MAGICKA_METER_PATH: String = 'sswfpath:enemymagickameter';	
+    static var CFG_ENEMY_MAGICKA_METER_ALPHA: String = 'falpha:enemymagickameter';	
 	static var CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET: String = 'fnumbersxoffset:enemymagickameter';
 	static var CFG_ENEMY_MAGICKA_METER_NUMBERS_YOFFSET: String = 'fnumbersyoffset:enemymagickameter';
 	static var CFG_ENEMY_MAGICKA_METER_NUMBERS_XSCALE: String = 'fnumbersxscale:enemymagickameter';
 	static var CFG_ENEMY_MAGICKA_METER_NUMBERS_YSCALE: String = 'fnumbersyscale:enemymagickameter';
+	static var CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA: String = 'fnumbersalpha:enemymagickameter';	
 	
 	static var CFG_ENEMY_STAMINA_METER_XOFFSET: String = 'fxoffset:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_YOFFSET: String = 'fyoffset:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_XSCALE: String = 'fxscale:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_YSCALE: String = 'fyscale:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_PATH: String = 'sswfpath:enemystaminameter';	
+	static var CFG_ENEMY_STAMINA_METER_ALPHA: String = 'falpha:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_NUMBERS_XOFFSET: String = 'fnumbersxoffset:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_NUMBERS_YOFFSET: String = 'fnumbersyoffset:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_NUMBERS_XSCALE: String = 'fnumbersxscale:enemystaminameter';
 	static var CFG_ENEMY_STAMINA_METER_NUMBERS_YSCALE: String = 'fnumbersyscale:enemystaminameter';	
+	static var CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA: String = 'fnumbersalpha:enemystaminameter';
 	
 	static var CFG_ENEMY_HEALTH_METER_NUMBERS_XOFFSET: String = 'fnumbersxoffset:enemyhealthmeter';
 	static var CFG_ENEMY_HEALTH_METER_NUMBERS_YOFFSET: String = 'fnumbersyoffset:enemyhealthmeter';
 	static var CFG_ENEMY_HEALTH_METER_NUMBERS_XSCALE: String = 'fnumbersxscale:enemyhealthmeter';
 	static var CFG_ENEMY_HEALTH_METER_NUMBERS_YSCALE: String = 'fnumbersyscale:enemyhealthmeter';		
+	static var CFG_ENEMY_HEALTH_METER_NUMBERS_ALPHA: String = 'fnumbersalpha:enemyhealthmeter';		
 			
 	static var CFG_ENEMY_METER_USE_STACKING: String = 'busestacking:enemymeter';
 	static var CFG_ENEMY_METER_HEIGHT: String = 'fheight:enemymeter';
