@@ -462,6 +462,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			return;
 		}
 		
+		IconContainer.appendImage("ahzEnch");
+		
 		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInFormList("dbmDisp"))
 		{
 			IconContainer.appendImage("dbmDisp");
