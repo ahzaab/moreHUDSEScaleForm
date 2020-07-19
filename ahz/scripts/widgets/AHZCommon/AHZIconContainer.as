@@ -9,8 +9,8 @@ class AHZIconContainer
 	//private static var ICON_WIDTH:Number = 20;
 	//private static var ICON_HEIGHT:Number = 20;
 	private static var MIN_ICON_SIZE:Number = 16;
-	private static var ICON_XOFFSET:Number = -5;
-	private static var ICON_YOFFSET:Number = -5;
+	private static var ICON_XOFFSET:Number = 0;
+	private static var TEXT_FIELD_METRIC_BOTTOM:Number = 0;
 
 	/* Static */
 	private static var eventObject: Object;
@@ -81,6 +81,17 @@ class AHZIconContainer
 		}
 	}
 
+	private function getTextFieldCenter():Number
+	{
+		var bottom:Number = (_tf._y + _tf._height);
+		var lineMetrics = _tf.getLineMetrics(1);
+		var unknownSpaceBetweenBottomAndMetricsBottom = TEXT_FIELD_METRIC_BOTTOM;
+		
+		var textCenter: Number = bottom - (lineMetrics.height / 2);
+		
+		return textCenter - unknownSpaceBetweenBottomAndMetricsBottom;
+	}
+
 	public function appendImage(a_imageName:String):Void
 	{		
 		// Cannot load any more icons
@@ -138,7 +149,9 @@ class AHZIconContainer
 				loadedIcons[loadedIconNames.length]._height = (_iconSize * _iconScale);
 				loadedIcons[loadedIconNames.length]._width = (_iconSize * _iconScale);
 				loadedIcons[loadedIconNames.length]._x = (currentLineMetrics.x + currentLineMetrics.width) + ICON_XOFFSET + _tf._x ;
-				loadedIcons[loadedIconNames.length]._y = (_tf._y + _tf._height) - (_iconSize * _iconScale) + ICON_YOFFSET;
+				loadedIcons[loadedIconNames.length]._y = getTextFieldCenter() - ((_iconSize * _iconScale) / 2);
+				
+				
 				loadedIcons._alpha = _tf._alpha;
 				
 				// preposition the previously added icons
@@ -228,10 +241,8 @@ class AHZIconContainer
 		var xDelta = _lastX - (newLineMetrics.x + _tf._x);
 		for (var i = 0; i < loadedIconNames.length; i++)
 		{
-			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("old loadedIcons["+i+"]._x: " + loadedIcons[i]._x, false);
 			loadedIcons[i]._x = loadedIcons[i]._x - (xDelta);
-			//_global.skse.plugins.AHZmoreHUDInventory.AHZLog("new loadedIcons["+i+"]._x: " + loadedIcons[i]._x, false);
-			loadedIcons[i]._y = (_tf._y + _tf._height) - (_iconSize * _iconScale) + ICON_YOFFSET;
+			loadedIcons[i]._y = getTextFieldCenter() - ((_iconSize * _iconScale) / 2);
 		}		
 		_lastX = (newLineMetrics.x + _tf._x);
 	}
