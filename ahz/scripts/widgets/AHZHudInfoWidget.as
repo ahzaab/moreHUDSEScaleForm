@@ -614,8 +614,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			return;
 		}
 		
-		MagickaStats_mc._alpha = (showEnemyMagickaStats) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
-		StaminaStats_mc._alpha = (showEnemyStaminaStats) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
+		MagickaStats_mc._alpha = (showEnemyMagickaStats && enemy.maxMagicka > 0) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
+		StaminaStats_mc._alpha = (showEnemyStaminaStats && enemy.maxStamina > 0) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
 		MagickaStats_mc.Stats.text = enemy.magicka.toString() + "/" + enemy.maxMagicka.toString();
 		StaminaStats_mc.Stats.text = enemy.stamina.toString() + "/" + enemy.maxStamina.toString();		
 		
@@ -628,8 +628,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 		else
 		{
-			MagickaStats_mc._alpha = (showEnemyMagickaStats) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
-			StaminaStats_mc._alpha = (showEnemyStaminaStats) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
+			MagickaStats_mc._alpha = (showEnemyMagickaStats && enemy.maxMagicka > 0) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
+			StaminaStats_mc._alpha = (showEnemyStaminaStats && enemy.maxStamina > 0) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
 			MagickaStats_mc.Stats.text = enemy.magicka.toString() + "/" + enemy.maxMagicka.toString();
 			StaminaStats_mc.Stats.text = enemy.stamina.toString() + "/" + enemy.maxStamina.toString();
 			MagickaStats_mc._x = LoadedEnemyMagicka_mc._x + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET];
