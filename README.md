@@ -19,4 +19,4 @@ transferred to the ActionScript using the UI Papyrus script.
 No polling or process is done in papyrus with the exception of MCM menu configuration and KeyPress events for the toggling functions although technically that could be handled in the plugin.
 
 ## Configuration
-HUD mod authors, you can reskin or modify the additional enemy meters by including [these](https://github.com/ahzaab/moreHUDSE/tree/master/Data/Interface/exported/moreHUD) files with your mod as a fmod or standalone patch, and modity to meet your needs.  These files must be placed in the `Data/interface/exported/moreHUD` folder.
+HUD mod authors, you can reskin or modify the additional enemy meters by including [these](https://github.com/ahzaab/moreHUDSE/tree/master/dist/Data/Interface/exported/moreHUD) files with your mod as a fmod or standalone patch, and modity to meet your needs.  These files must be placed in the `Data/interface/exported/moreHUD` folder.
