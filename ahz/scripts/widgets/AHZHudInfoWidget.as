@@ -70,9 +70,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	private var showEnemyStaminaStats:Boolean;
 	private var showEnemyMagickaStats:Boolean;
 	private var showEnemyHealthStats:Boolean;
+	private var iconSize:Number;
 	
 	var PLAYER_CARD_WIDTH:Number = 651.0;
 	var EXPORTED_PREFIX:String = "exported/"	
+	var DEFAULT_ICON_SIZE:Number=20;	
 		
 	// private variables
 	private var savedRolloverInfoText:String;
@@ -105,6 +107,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 
 	// Statics
 	private static var hooksInstalled:Boolean = false;
+	static var IconContainer:AHZIconContainer = new AHZIconContainer();
 
 	/* INITIALIZATION */
 	
@@ -132,7 +135,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		hideBottomWidget();
 		hideInventoryWidget();
 
-		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("AHZConfigManager.loadConfig");
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("AHZConfigManager.loadConfig");
 		AHZConfigManager.loadConfig(this, "configLoaded", "configError");
 
 		if (_root.HUDMovieBaseInstance.RolloverInfoInstance)
@@ -192,117 +195,120 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	}
 
 	function configLoaded(event:Object):Void{
-		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("configLoaded: " + event);
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("configLoaded: " + event);
 		_config = event.config;
 		prepareConfigs();
 		initializeClips();
 	}
 
 	function configError(event:Object):Void{
-		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("configError: " + event);
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("configError: " + event);
 		prepareConfigs();
 		initializeClips();
+	}
+
+	function isDefined(obj):Boolean{
+		return (obj != undefined && obj != null);
 	}
 
 	function prepareConfigs() :Void{
 		if (!_config)
 			_config = {};
 		
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XOFFSET] = 0;
 		
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YOFFSET] = 0;		
 		
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XSCALE]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XSCALE] = 1.0;				
 		
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YSCALE]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_YSCALE] = 1.0;						
 
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA] = 100;	
 
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET] = 0;			
 
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YOFFSET] = 0;		
 
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XSCALE]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XSCALE] = 1.0;		
 
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YSCALE])
+		if (!isDefined(isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YSCALE])))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YSCALE] = 1.0;	
 			
-		if (!_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA]))
 			_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] = 100;				
 			
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XOFFSET] = 0;
 		
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YOFFSET] = 0;		
 		
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XSCALE]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_XSCALE] = 1.0;				
 		
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YSCALE]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_YSCALE] = 1.0;						
 
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA] = 100;	
 
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XOFFSET] = 0;			
 
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YOFFSET] = 0;		
 
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XSCALE]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XSCALE] = 1.0;		
 
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YSCALE]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_YSCALE] = 1.0;	
 	
-		if (!_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA]))
 			_config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] = 100;	
 	
-		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XOFFSET] = 0;			
 
-		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YOFFSET])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YOFFSET]))
 			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YOFFSET] = 0;		
 
-		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XSCALE]))
 			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_XSCALE] = 1.0;		
 
-		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YSCALE])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YSCALE]))
 			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_YSCALE] = 1.0;	
 			
-		if (!_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_ALPHA])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_ALPHA]))
 			_config[AHZDefines.CFG_ENEMY_HEALTH_METER_NUMBERS_ALPHA] = 100;			
 			
-		if (!_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING])
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING])){
 			_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING] = true;
+		}
+		
+		if (!isDefined(_config[AHZDefines.CFG_ENEMY_METER_HEIGHT]))
+			_config[AHZDefines.CFG_ENEMY_METER_HEIGHT] = ENEMY_METER_HEIGHT;	
 			
-		if (!_config[AHZDefines.CFG_ENEMY_METER_HEIGHT])
-			_config[AHZDefines.CFG_ENEMY_METER_HEIGHT] = ENEMY_METER_HEIGHT;				
+		if (!isDefined(_config[AHZDefines.CFG_ICONS_SCALE]))
+			_config[AHZDefines.CFG_ICONS_SCALE] = 1.0;			
 	}
 	
 	function initializeClips():Void {	
-		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("initializeClips");
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("initializeClips");
 		if (_config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH])
-		{
-			if (_config.useExported && _config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH].toLowerCase().indexOf(EXPORTED_PREFIX)<0)
-			{
-				_config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH] = EXPORTED_PREFIX + _config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH];
-			}	
-			
-			_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading: " + _config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH]);
+		{			
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading: " + _config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH]);
 			metersToLoad.push(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH])
 			LoadedEnemyStamina_mc = this.createEmptyMovieClip("LoadedEnemyStamina_mc", EnemyStamina_mc.getDepth());
-			mcLoader.loadClip(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH], LoadedEnemyStamina_mc);					
+			mcLoader.loadClip(AHZConfigManager.ResolvePath(_config[AHZDefines.CFG_ENEMY_STAMINA_METER_PATH]), LoadedEnemyStamina_mc);					
 			
 			// Make the built-in movieclip disapear, it is being replaced, pending any loading errors
 			EnemyStamina_mc._alpha = 0;
@@ -316,15 +322,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		
 		if (_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH])
 		{
-			if (_config.useExported && _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH].toLowerCase().indexOf(EXPORTED_PREFIX)<0)
-			{
-				_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH] = EXPORTED_PREFIX + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH];
-			}	
 			
-			_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading: " + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH]);
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading: " + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH]);
 			metersToLoad.push(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH])
 			LoadedEnemyMagicka_mc = this.createEmptyMovieClip("LoadedEnemyMagicka_mc", EnemyMagicka_mc.getDepth());
-			mcLoader.loadClip(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH], LoadedEnemyMagicka_mc);		
+			mcLoader.loadClip(AHZConfigManager.ResolvePath(_config[AHZDefines.CFG_ENEMY_MAGICKA_METER_PATH]), LoadedEnemyMagicka_mc);		
 			
 			// Make the built-in movieclip disapear, it is being replaced, pending any loading errorss
 			EnemyMagicka_mc._alpha = 0;
@@ -335,11 +337,49 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			LoadedEnemyMagicka_mc = EnemyMagicka_mc;
 		}		
-		
+				
 		if (!metersToLoad.length)
 		{
-			clipsReady();
+			loadIcons();
 		}
+	}
+
+	public function iconsLoaded(event:Object):Void
+	{
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("~ iconsLoaded event ~");
+		IconContainer.Reset(DEFAULT_ICON_SIZE);
+		clipsReady();
+	}
+
+	public function iconsLoadedError(event:Object):Void
+	{
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("~ iconsLoadedError event ~");
+		IconContainer.Reset(DEFAULT_ICON_SIZE);
+		clipsReady();
+	}
+
+	public function loadIcons(): Void
+	{
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading icons");
+		if (_config[AHZDefines.CFG_ICONS_PATH])
+		{
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading: " + _config[AHZDefines.CFG_ICONS_PATH]);
+			IconContainer.Load(
+						TopRolloverText, 
+						AHZConfigManager.ResolvePath(_config[AHZDefines.CFG_ICONS_PATH]), 
+						this, 
+						"iconsLoaded", 
+						"iconsLoadedError", 
+						DEFAULT_ICON_SIZE, 
+						_config[AHZDefines.CFG_ICONS_SCALE],
+						_config[AHZDefines.CFG_ICONS_SPACING],
+						_config[AHZDefines.CFG_ICONS_YOFFSET]);
+		}
+		else
+		{
+			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Could not load: " + _config[AHZDefines.CFG_ICONS_PATH]);
+			clipsReady();
+		}							  
 	}
 
 	function clipsReady()
@@ -348,8 +388,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			LoadedEnemyMagicka_mc = EnemyMagicka_mc;			
 		if (!LoadedEnemyStamina_mc)
 			LoadedEnemyStamina_mc = EnemyStamina_mc;
-					
-		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading COMPLETED");
+										
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("Loading COMPLETED");
 		LoadedEnemyMagicka_mc._alpha = 0;
 		LoadedEnemyStamina_mc._alpha = 0;
 		LoadedEnemyMagicka_mc._xscale = (_root.HUDMovieBaseInstance.EnemyHealth_mc._xscale ) * _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XSCALE];
@@ -365,7 +405,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		enemyMeterHeightScaled = _config[AHZDefines.CFG_ENEMY_METER_HEIGHT] * (_root.HUDMovieBaseInstance.EnemyHealth_mc._yscale/100);
 
 		// Not stacking so height does not matter
-		if (!_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING])
+		if (_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING] == false)
 		{
 			enemyMeterHeightScaled = 1.0;
 		}
@@ -378,6 +418,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		LoadedEnemyMagicka_mc._x = baseX + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_XOFFSET];
 		LoadedEnemyStamina_mc._x = baseX  + _config[AHZDefines.CFG_ENEMY_STAMINA_METER_XOFFSET];
 		staminaMeterBaseY = baseY + enemyMeterHeightScaled + _config[AHZDefines.CFG_ENEMY_STAMINA_METER_YOFFSET];
+		LoadedEnemyStamina_mc._y = staminaMeterBaseY;
 		
 		EnemyMagickaMeter = new Meter(LoadedEnemyMagicka_mc);
 		EnemyStaminaMeter = new Meter(LoadedEnemyStamina_mc);
@@ -431,6 +472,49 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			hookFunction(_root.HUDMovieBaseInstance,"SetCompassAngle",this,"SetCompassAngle");
 			_global.skse.plugins.AHZmoreHUDPlugin.InstallHooks();
 			hooksInstalled = true;
+		}		
+	}
+	
+	function ProcessThirdPartyIcons(validTarget:Boolean)
+	{
+		if (!validTarget)
+		{
+			return;
+		}
+		//IconContainer.appendImage("ahzKnown");
+		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInFormList("dbmDisp"))
+		{
+			IconContainer.appendImage("dbmDisp");
+		}
+	
+		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInFormList("dbmNew"))
+		{
+			IconContainer.appendImage("dbmNew");
+		}
+		
+		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInFormList("dbmFound"))
+		{
+			IconContainer.appendImage("dbmFound");
+		}		
+		
+		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInIconList("iEquipQ.png"))
+		{
+			IconContainer.appendImage("iEquipQ.png");
+		}		
+		
+		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInIconList("iEquipQB.png"))
+		{
+			IconContainer.appendImage("iEquipQB.png");
+		}
+		
+		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInIconList("iEquipQL.png"))
+		{
+			IconContainer.appendImage("iEquipQL.png");
+		}	
+		
+		if (_global.skse.plugins.AHZmoreHUDPlugin.IsTargetInIconList("iEquipQR.png"))
+		{
+			IconContainer.appendImage("iEquipQR.png");
 		}		
 	}
 
@@ -490,12 +574,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			LoadedEnemyMagicka_mc._alpha = _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_ALPHA];	
 			LoadedEnemyStamina_mc._alpha = _config[AHZDefines.CFG_ENEMY_STAMINA_METER_ALPHA];
 		}		
-		
-		if (!_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING])
-		{
-			LoadedEnemyStamina_mc._y = staminaMeterBaseY;
-		}
-		else
+				
+		if (_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING] == true)
 		{
 			if (magickaPct < 0 && staminaPct < 0)
 			{
@@ -536,12 +616,12 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			return;
 		}
 		
-		MagickaStats_mc._alpha = (showEnemyMagickaStats) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
-		StaminaStats_mc._alpha = (showEnemyStaminaStats) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
+		MagickaStats_mc._alpha = (showEnemyMagickaStats && enemy.maxMagicka > 0) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
+		StaminaStats_mc._alpha = (showEnemyStaminaStats && enemy.maxStamina > 0) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
 		MagickaStats_mc.Stats.text = enemy.magicka.toString() + "/" + enemy.maxMagicka.toString();
 		StaminaStats_mc.Stats.text = enemy.stamina.toString() + "/" + enemy.maxStamina.toString();		
 		
-		if (!_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING])
+		if (_config[AHZDefines.CFG_ENEMY_METER_USE_STACKING] == false)
 		{
 			MagickaStats_mc._x = baseX + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET];
 			MagickaStats_mc._y = baseY + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YOFFSET];
@@ -550,10 +630,6 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		}
 		else
 		{
-			MagickaStats_mc._alpha = (showEnemyMagickaStats) ? _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_ALPHA] : 0;
-			StaminaStats_mc._alpha = (showEnemyStaminaStats) ? _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_ALPHA] : 0;
-			MagickaStats_mc.Stats.text = enemy.magicka.toString() + "/" + enemy.maxMagicka.toString();
-			StaminaStats_mc.Stats.text = enemy.stamina.toString() + "/" + enemy.maxStamina.toString();
 			MagickaStats_mc._x = LoadedEnemyMagicka_mc._x + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_XOFFSET];
 			MagickaStats_mc._y = LoadedEnemyMagicka_mc._y + _config[AHZDefines.CFG_ENEMY_MAGICKA_METER_NUMBERS_YOFFSET];
 			StaminaStats_mc._x = LoadedEnemyStamina_mc._x + _config[AHZDefines.CFG_ENEMY_STAMINA_METER_NUMBERS_XOFFSET];
@@ -631,11 +707,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("hudmode: " + newHUDMode + ": visible");
 			this._visible = true;
+			IconContainer.Show();
 		}
 		else
 		{
 			//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("hudmode: " + newHUDMode + ": hidden");
 			this._visible = false;
+			IconContainer.Hide();
 		}
 
 	}
@@ -645,6 +723,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		clearInterval(alphaTimer);
 		if (TopRolloverText._alpha < 50)
 		{
+			IconContainer._alpha = 0;
 			hideSideWidget();	
 			hideInventoryWidget();
 			//Book_mc._alpha = 0;
@@ -662,7 +741,8 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		{
 			var outData:Object = {outObj:Object};
 			var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
-			var hudIsVisible:Boolean = (TopRolloverText._alpha > 0);	
+			var hudIsVisible:Boolean = (TopRolloverText._alpha > 0);
+			IconContainer._alpha = TopRolloverText._alpha;
 			ProcessPlayerWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 			ProcessTargetAndInventoryWidget(validTarget && hudIsVisible);
 		}	
@@ -679,6 +759,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		var outData:Object = {outObj:Object};
 		var validTarget:Boolean = _global.skse.plugins.AHZmoreHUDPlugin.GetIsValidTarget(outData);
 		var hudIsVisible:Boolean = (TopRolloverText._alpha > 0);
+		IconContainer._alpha = TopRolloverText._alpha;
 		ProcessPlayerWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 		ProcessTargetAndInventoryWidget(validTarget && hudIsVisible, (outData && outData.outObj && outData.outObj.canCarry));
 	}
@@ -700,28 +781,14 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
         return firstText + appendedHtml + secondText;
 	}
 
-	function appendImageToEnd(textField:TextField, imageName:String, width:Number, height:Number)
-	{
-		if (textField.text.indexOf("[" + imageName + "]") < 0)
-		{
-			var b1 = BitmapData.loadBitmap(imageName); 
-			if (b1)
-			{
-				var a = new Array; 
-				a[0] = { subString:"[" + imageName + "]", image:b1, width:width, height:height, id:"id" + imageName };  //baseLineY:0, 
-				textField.setImageSubstitutions(a);
-				textField.htmlText = 
-				appendHtmlToEnd(textField.htmlText, " " + "[" + imageName + "]");
-			}
-		}
-	}
-
 	// Hooks the main huds function
 	function SetCrosshairTarget(abActivate:Boolean,aName:String,abShowButton:Boolean,abTextOnly:Boolean,abFavorMode:Boolean,abShowCrosshair:Boolean,aWeight:Number,aCost:Number,aFieldValue:Number,aFieldText):Void
 	{			
 		var validTarget:Boolean = false;
 		var activateWidgets:Boolean = false;
 		var outData:Object = {outObj:Object};
+		IconContainer.Reset(iconSize);
+		IconContainer._alpha = TopRolloverText._alpha;
 		
 		// Always reset the delay timer to reset when the cross hair changes
 		if (widgetDelayTimer)
@@ -776,6 +843,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		ProcessBookSkill(validTarget);
 		ProcessWeightClass(validTarget);
 		ProcessReadBook(validTarget);
+		ProcessThirdPartyIcons(validTarget);
 	}
 	
 	function delayedDisplay():Void
@@ -1094,12 +1162,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 				
 				// Player knows the enchantment
 				if (knownEnchantment == 1){
-					appendImageToEnd(TopRolloverText, "ahzknown.png", 17, 17);
+					IconContainer._alpha = TopRolloverText._alpha;
+					IconContainer.appendImage("ahzKnown");
 				}
 				
 				// The item is enchanted, but the player cannot learn the enchantment
 				if (knownEnchantment == 2){
-					appendImageToEnd(TopRolloverText, "ahzEnch.png", 17, 17);
+					IconContainer.appendImage("ahzEnch")
 				}	
 			}
 		}
@@ -1298,6 +1367,11 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	}
 
 	// @Papyrus
+	public function setIconSize(a_size:Number):Void
+	{
+		iconSize = a_size;
+	}
+	
 	public function setBottomWidgetScale(percent:Number):Void
 	{
 		AHZBottomBar_mc._yscale  = (percent / 1.0);
@@ -1642,7 +1716,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 			if (bookRead && TopRolloverText._alpha>0 && TopRolloverText.htmlText!="")
 			{
 				TopRolloverText.html=true;
-				appendImageToEnd(TopRolloverText, "eyeImage.png", 17, 17);				
+				IconContainer.appendImage("ahzEye");
 			}
 		}
 	}
@@ -1692,12 +1766,13 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 	
 	public function onLoadInit(s_mc: MovieClip): Void
 	{
-		_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("onLoadInit: " + s_mc);
+		//_global.skse.plugins.AHZmoreHUDPlugin.AHZLog("onLoadInit: " + s_mc);
 
 		removePendingClip(s_mc);
 		if (!metersToLoad.length)
 		{
-			clipsReady();
+			
+			loadIcons();
 		}
 	}
 	
@@ -1710,7 +1785,7 @@ class ahz.scripts.widgets.AHZHudInfoWidget extends MovieClip
 		removePendingClip(s_mc);
 		if (!metersToLoad.length)
 		{
-			clipsReady();
+			loadIcons();
 		}		
 	}	
 }
